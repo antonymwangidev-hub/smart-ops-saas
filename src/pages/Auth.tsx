@@ -9,6 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Zap, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { lovable } from "@/integrations/lovable";
+import { Separator } from "@/components/ui/separator";
 
 export default function Auth() {
   const { user, loading } = useAuth();
