@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useOrg } from "@/contexts/OrgContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 
