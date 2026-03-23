@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, ShoppingCart, DollarSign, TrendingUp } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { HealthScoreCard } from "@/components/HealthScoreCard";
+import { AiAssistant } from "@/components/AiAssistant";
 
 interface Stats {
   customers: number;
@@ -77,6 +79,11 @@ export default function Dashboard() {
           ))}
         </div>
 
+        {/* Health Score */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <HealthScoreCard />
+        </div>
+
         <Card>
           <CardHeader>
             <CardTitle>Recent Orders</CardTitle>
@@ -98,6 +105,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+      <AiAssistant />
     </AppLayout>
   );
 }
