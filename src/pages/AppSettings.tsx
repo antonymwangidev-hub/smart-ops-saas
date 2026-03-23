@@ -8,13 +8,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2 } from "lucide-react";
+import { Loader2, Moon, Sun, Monitor } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useTheme } from "@/components/ThemeProvider";
 
 export default function AppSettings() {
   const { currentOrg, refreshOrgs } = useOrg();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { theme, setTheme } = useTheme();
   const [orgName, setOrgName] = useState(currentOrg?.name || "");
   const [saving, setSaving] = useState(false);
 
@@ -27,6 +29,12 @@ export default function AppSettings() {
     setSaving(false);
   };
 
+  const themeOptions = [
+    { value: "light" as const, label: "Light", icon: Sun },
+    { value: "dark" as const, label: "Dark", icon: Moon },
+    { value: "system" as const, label: "System", icon: Monitor },
+  ];
+
   return (
     <AppLayout>
       <div className="space-y-6 max-w-2xl">
@@ -35,7 +43,7 @@ export default function AppSettings() {
           <p className="text-muted-foreground">Manage your organization</p>
         </div>
 
-        <Card>
+        <Card className="glass">
           <CardHeader>
             <CardTitle>Organization</CardTitle>
             <CardDescription>Update your organization details</CardDescription>
@@ -43,20 +51,45 @@ export default function AppSettings() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>Organization Name</Label>
-              <Input value={orgName} onChange={(e) => setOrgName(e.target.value)} />
+              <Input value={orgName} onChange={(e) => setOrgName(e.target.value)} className="rounded-xl" />
             </div>
             <div className="flex items-center gap-2">
               <Label>Your Role</Label>
-              <Badge variant="outline">{currentOrg?.role}</Badge>
+              <Badge variant="outline" className="rounded-lg">{currentOrg?.role}</Badge>
             </div>
-            <Button onClick={handleSave} disabled={saving}>
+            <Button onClick={handleSave} disabled={saving} className="rounded-xl">
               {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Save Changes
             </Button>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="glass">
+          <CardHeader>
+            <CardTitle>Appearance</CardTitle>
+            <CardDescription>Choose your preferred theme</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-3">
+              {themeOptions.map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => setTheme(opt.value)}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all duration-200 ${
+                    theme === opt.value
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border text-muted-foreground hover:border-primary/30 hover:bg-accent"
+                  }`}
+                >
+                  <opt.icon className="h-4 w-4" />
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="glass">
           <CardHeader>
             <CardTitle>Account</CardTitle>
             <CardDescription>Your account information</CardDescription>
@@ -64,7 +97,7 @@ export default function AppSettings() {
           <CardContent>
             <div className="space-y-2">
               <Label>Email</Label>
-              <Input value={user?.email || ""} disabled />
+              <Input value={user?.email || ""} disabled className="rounded-xl" />
             </div>
           </CardContent>
         </Card>
