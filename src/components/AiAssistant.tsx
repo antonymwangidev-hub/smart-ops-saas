@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useOrg } from "@/contexts/OrgContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -25,6 +26,7 @@ export function AiAssistant() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const { currentOrg } = useOrg();
+  const { session } = useAuth();
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -39,7 +41,7 @@ export function AiAssistant() {
   }, [open]);
 
   const send = async (text: string) => {
-    if (!text.trim() || !currentOrg || loading) return;
+    if (!text.trim() || !currentOrg || loading || !session?.access_token) return;
     const userMsg: Message = { role: "user", content: text.trim() };
     const allMessages = [...messages, userMsg];
     setMessages(allMessages);
@@ -55,7 +57,7 @@ export function AiAssistant() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            Authorization: `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({ messages: allMessages, orgId: currentOrg.id }),
         }
