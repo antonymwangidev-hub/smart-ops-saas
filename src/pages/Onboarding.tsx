@@ -26,24 +26,12 @@ export default function Onboarding() {
     if (!orgName.trim()) return;
     setSubmitting(true);
 
-    const { data: org, error } = await supabase
-      .from("organizations")
-      .insert({ name: orgName.trim() })
-      .select()
-      .single();
+    const { data, error } = await supabase.rpc("create_organization_with_admin", {
+      org_name: orgName.trim(),
+    });
 
-    if (error || !org) {
-      toast({ title: "Error", description: error?.message || "Failed to create organization", variant: "destructive" });
-      setSubmitting(false);
-      return;
-    }
-
-    const { error: memberError } = await supabase
-      .from("organization_members")
-      .insert({ user_id: user.id, organization_id: org.id, role: "admin" });
-
-    if (memberError) {
-      toast({ title: "Error", description: memberError.message, variant: "destructive" });
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
       await refreshOrgs();
     }
