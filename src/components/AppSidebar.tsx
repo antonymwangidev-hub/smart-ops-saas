@@ -34,22 +34,22 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="border-b border-border p-4">
+      <SidebarHeader className="border-b border-border/50 p-4">
         {!collapsed ? (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
+          <div className="space-y-3">
+            <div className="flex items-center gap-2.5">
+              <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/20">
                 <Zap className="h-4 w-4 text-primary-foreground" />
               </div>
-              <span className="font-bold text-lg text-foreground">SmartOps</span>
+              <span className="font-bold text-lg tracking-tight text-foreground">SmartOps</span>
             </div>
             {organizations.length > 0 && (
               <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground w-full px-1 py-1 rounded-md hover:bg-accent transition-colors">
+                <DropdownMenuTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground w-full px-2 py-1.5 rounded-lg hover:bg-accent transition-all duration-200">
                   <span className="truncate">{currentOrg?.name ?? "Select org"}</span>
-                  <ChevronDown className="h-3 w-3 ml-auto" />
+                  <ChevronDown className="h-3 w-3 ml-auto opacity-50" />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
+                <DropdownMenuContent align="start" className="min-w-[200px]">
                   {organizations.map((org) => (
                     <DropdownMenuItem key={org.id} onClick={() => setCurrentOrg(org)}>
                       {org.name}
@@ -60,7 +60,7 @@ export function AppSidebar() {
             )}
           </div>
         ) : (
-          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center mx-auto">
+          <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center mx-auto shadow-lg shadow-primary/20">
             <Zap className="h-4 w-4 text-primary-foreground" />
           </div>
         )}
@@ -68,46 +68,65 @@ export function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Main</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground/70 px-2">Main</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={location.pathname === item.url}>
-                    <NavLink to={item.url} end activeClassName="bg-accent text-accent-foreground font-medium">
-                      <item.icon className="h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {navItems.map((item) => {
+                const active = location.pathname === item.url;
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild isActive={active}>
+                      <NavLink
+                        to={item.url}
+                        end
+                        activeClassName="bg-primary/10 text-primary font-medium border-l-2 border-primary"
+                        className="rounded-lg transition-all duration-200 hover:bg-accent"
+                      >
+                        <item.icon className={`h-4 w-4 ${active ? "text-primary" : ""}`} />
+                        {!collapsed && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>System</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground/70 px-2">System</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {secondaryItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={location.pathname === item.url}>
-                    <NavLink to={item.url} end activeClassName="bg-accent text-accent-foreground font-medium">
-                      <item.icon className="h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {secondaryItems.map((item) => {
+                const active = location.pathname === item.url;
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild isActive={active}>
+                      <NavLink
+                        to={item.url}
+                        end
+                        activeClassName="bg-primary/10 text-primary font-medium border-l-2 border-primary"
+                        className="rounded-lg transition-all duration-200 hover:bg-accent"
+                      >
+                        <item.icon className={`h-4 w-4 ${active ? "text-primary" : ""}`} />
+                        {!collapsed && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-border p-2">
+      <SidebarFooter className="border-t border-border/50 p-2">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={signOut} className="text-muted-foreground hover:text-destructive">
+            <SidebarMenuButton
+              onClick={signOut}
+              className="text-muted-foreground hover:text-destructive rounded-lg transition-all duration-200"
+            >
               <LogOut className="h-4 w-4" />
               {!collapsed && <span>Sign out</span>}
             </SidebarMenuButton>
