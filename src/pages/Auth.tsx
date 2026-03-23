@@ -90,6 +90,12 @@ export default function Auth() {
                     Sign In
                   </Button>
                 </form>
+                <div className="mt-4">
+                  <Separator className="my-4" />
+                  <Button type="button" variant="outline" className="w-full" onClick={() => lovable.auth.signInWithOAuth("google")}>
+                    Sign in with Google
+                  </Button>
+                </div>
               </TabsContent>
               <TabsContent value="signup">
                 <form onSubmit={handleSignup} className="space-y-4">
