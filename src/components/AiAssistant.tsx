@@ -41,7 +41,7 @@ export function AiAssistant() {
   }, [open]);
 
   const send = async (text: string) => {
-    if (!text.trim() || !currentOrg || loading) return;
+    if (!text.trim() || !currentOrg || loading || !session?.access_token) return;
     const userMsg: Message = { role: "user", content: text.trim() };
     const allMessages = [...messages, userMsg];
     setMessages(allMessages);
