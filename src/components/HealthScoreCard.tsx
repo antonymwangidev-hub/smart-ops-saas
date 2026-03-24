@@ -48,8 +48,7 @@ export function HealthScoreCard() {
   }, [health]);
 
   const getColor = (score: number) => {
-    if (score >= 80) return { text: "text-success", bg: "bg-success", ring: "ring-success/20", gradient: "from-success to-success/60" };
-    if (score >= 60) return { text: "text-primary", bg: "bg-primary", ring: "ring-primary/20", gradient: "from-primary to-primary/60" };
+    if (score >= 70) return { text: "text-success", bg: "bg-success", ring: "ring-success/20", gradient: "from-success to-success/60" };
     if (score >= 40) return { text: "text-warning", bg: "bg-warning", ring: "ring-warning/20", gradient: "from-warning to-warning/60" };
     return { text: "text-destructive", bg: "bg-destructive", ring: "ring-destructive/20", gradient: "from-destructive to-destructive/60" };
   };
