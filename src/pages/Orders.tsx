@@ -120,6 +120,7 @@ export default function Orders() {
             <DialogTrigger asChild>
               <Button><Plus className="h-4 w-4 mr-2" />New Order</Button>
             </DialogTrigger>
+            <FileImport target="orders" onComplete={fetchData} />
             <DialogContent>
               <DialogHeader><DialogTitle>Create Order</DialogTitle></DialogHeader>
               <form onSubmit={handleCreate} className="space-y-4">
