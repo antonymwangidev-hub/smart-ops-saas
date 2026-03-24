@@ -41,6 +41,7 @@ function AnimatedCounter({ value, prefix = "" }: { value: number | string; prefi
 export default function Dashboard() {
   const { currentOrg } = useOrg();
   const { resolvedTheme } = useTheme();
+  const { formatAmount } = useCurrency();
   const [stats, setStats] = useState<Stats>({ customers: 0, orders: 0, revenue: 0, pendingOrders: 0 });
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [loaded, setLoaded] = useState(false);
