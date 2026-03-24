@@ -102,7 +102,11 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-foreground">
-                  {loaded ? <AnimatedCounter value={stat.value} prefix={stat.prefix || ""} /> : "—"}
+                  {loaded ? (
+                    (stat as any).format
+                      ? formatAmount(stat.value)
+                      : <AnimatedCounter value={stat.value} />
+                  ) : "—"}
                 </div>
               </CardContent>
             </Card>
