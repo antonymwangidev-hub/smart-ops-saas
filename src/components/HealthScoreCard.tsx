@@ -10,6 +10,9 @@ interface HealthData {
   status: string;
   summary: string;
   factors: string[];
+  trend: "improving" | "declining" | "stable";
+  revenueChangePercent: number;
+  completionRate: number;
 }
 
 export function HealthScoreCard() {
