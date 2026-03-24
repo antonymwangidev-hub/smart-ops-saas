@@ -94,14 +94,22 @@ export function HealthScoreCard() {
             <div className="flex-1 space-y-3">
               <div className="flex items-center gap-2">
                 <span className={cn("text-sm font-semibold px-2.5 py-1 rounded-full",
-                  health.score >= 60 ? "bg-success/10 text-success" : "bg-warning/10 text-warning"
+                  health.score >= 70 ? "bg-success/10 text-success" :
+                  health.score >= 40 ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive"
                 )}>
                   {health.status}
                 </span>
-                {health.score >= 60 ? (
+                {health.trend === "improving" ? (
                   <TrendingUp className="h-4 w-4 text-success" />
-                ) : (
-                  <TrendingDown className="h-4 w-4 text-warning" />
+                ) : health.trend === "declining" ? (
+                  <TrendingDown className="h-4 w-4 text-destructive" />
+                ) : null}
+                {health.revenueChangePercent !== 0 && (
+                  <span className={cn("text-xs font-medium",
+                    health.revenueChangePercent > 0 ? "text-success" : "text-destructive"
+                  )}>
+                    {health.revenueChangePercent > 0 ? "+" : ""}{health.revenueChangePercent}%
+                  </span>
                 )}
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">{health.summary}</p>
