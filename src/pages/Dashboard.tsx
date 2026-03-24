@@ -71,7 +71,7 @@ export default function Dashboard() {
   const statCards = [
     { title: "Total Customers", value: stats.customers, icon: Users, color: "text-primary", bg: "from-primary/10 to-primary/5" },
     { title: "Total Orders", value: stats.orders, icon: ShoppingCart, color: "text-secondary", bg: "from-secondary/10 to-secondary/5" },
-    { title: "Revenue", value: stats.revenue, prefix: "$", icon: DollarSign, color: "text-success", bg: "from-success/10 to-success/5" },
+    { title: "Revenue", value: stats.revenue, format: true, icon: DollarSign, color: "text-success", bg: "from-success/10 to-success/5" },
     { title: "Pending Orders", value: stats.pendingOrders, icon: TrendingUp, color: "text-warning", bg: "from-warning/10 to-warning/5" },
   ];
 
