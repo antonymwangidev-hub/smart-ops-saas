@@ -8,6 +8,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { HealthScoreCard } from "@/components/HealthScoreCard";
 import { AiAssistant } from "@/components/AiAssistant";
 import { useTheme } from "@/components/ThemeProvider";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 interface Stats {
   customers: number;
