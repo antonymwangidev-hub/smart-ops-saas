@@ -90,13 +90,21 @@ serve(async (req) => {
     const revenuePrevWeek = orders
       .filter(o => { const d = new Date(o.created_at); return d >= twoWeeksAgo && d < weekAgo && o.status === "completed"; })
       .reduce((s, o) => s + Number(o.amount), 0);
+    const revenueThisMonth = orders
+      .filter(o => new Date(o.created_at) >= monthAgo && o.status === "completed")
+      .reduce((s, o) => s + Number(o.amount), 0);
+
+    let revenueChangePercent = 0;
+    if (revenuePrevWeek > 0) {
+      revenueChangePercent = Math.round(((revenueThisWeek - revenuePrevWeek) / revenuePrevWeek) * 100);
+    }
 
     if (revenueThisWeek > revenuePrevWeek && revenueThisWeek > 0) {
       score += 10;
-      factors.push("Revenue growing week-over-week");
+      factors.push(`Revenue up ${revenueChangePercent}% this week`);
     } else if (revenueThisWeek < revenuePrevWeek && revenuePrevWeek > 0) {
       score -= 5;
-      factors.push("Revenue declined from last week");
+      factors.push(`Revenue down ${Math.abs(revenueChangePercent)}% from last week`);
     }
 
     // 4. Pending orders ratio
@@ -109,18 +117,34 @@ serve(async (req) => {
     // 5. Task completion
     const doneTasks = tasks.filter(t => t.status === "done").length;
     const totalTasks = tasks.length;
+    const completionRate = totalTasks > 0 ? doneTasks / totalTasks : 0;
     if (totalTasks > 0) {
-      const completionRate = doneTasks / totalTasks;
       if (completionRate > 0.7) {
         score += 5;
-        factors.push("Great task completion rate");
+        factors.push(`${Math.round(completionRate * 100)}% task completion rate`);
       } else if (completionRate < 0.3) {
         score -= 5;
         factors.push("Many tasks incomplete");
       }
     }
 
-    // 6. Activity level
+    // 6. Customer retention (inactivity check)
+    const activeCustomerIds = new Set(
+      orders.filter(o => new Date(o.created_at) >= monthAgo).map(o => o.customer_id).filter(Boolean)
+    );
+    const inactiveCustomers = customers.length > 0
+      ? customers.filter(c => !activeCustomerIds.has(c.id)).length
+      : 0;
+    const inactiveRate = customers.length > 0 ? inactiveCustomers / customers.length : 0;
+    if (inactiveRate > 0.7 && customers.length >= 5) {
+      score -= 10;
+      factors.push(`${inactiveCustomers} customers haven't ordered in 30 days`);
+    } else if (inactiveRate < 0.3 && customers.length >= 5) {
+      score += 5;
+      factors.push("Strong customer retention");
+    }
+
+    // 7. Activity level
     if (activities.length > 20) {
       score += 5;
       factors.push("High activity level this month");
@@ -132,23 +156,31 @@ serve(async (req) => {
     // Clamp
     score = Math.max(0, Math.min(100, score));
 
+    // Determine trend
+    const trend = revenueChangePercent > 0 || newCustomersThisWeek > newCustomersPrevWeek
+      ? "improving"
+      : revenueChangePercent < 0 || (newCustomersThisWeek === 0 && customers.length > 0)
+        ? "declining"
+        : "stable";
+
     let status: string;
     let summary: string;
-    if (score >= 80) {
+    if (score >= 70) {
       status = "Excellent";
-      summary = "Your business is thriving with strong growth across all metrics.";
-    } else if (score >= 60) {
-      status = "Good";
-      summary = "Your business is performing well with room for growth.";
+      summary = revenueChangePercent > 0
+        ? `Your revenue increased by ${revenueChangePercent}% this week. Business is thriving!`
+        : "Your business is performing strongly across all metrics.";
     } else if (score >= 40) {
       status = "Needs Attention";
-      summary = "Some areas need improvement. Focus on customer acquisition and order completion.";
+      summary = revenueChangePercent < 0
+        ? `Revenue declined ${Math.abs(revenueChangePercent)}% this week. Focus on customer engagement.`
+        : "Some areas need improvement. Focus on customer acquisition and order completion.";
     } else {
       status = "Critical";
       summary = "Your business metrics need immediate attention. Consider reaching out to customers.";
     }
 
-    return new Response(JSON.stringify({ score, status, summary, factors }), {
+    return new Response(JSON.stringify({ score, status, summary, factors, trend, revenueChangePercent, completionRate: Math.round(completionRate * 100) }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
