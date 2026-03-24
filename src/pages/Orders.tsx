@@ -39,6 +39,7 @@ export default function Orders() {
   const { currentOrg } = useOrg();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { formatAmount } = useCurrency();
   const [orders, setOrders] = useState<Order[]>([]);
   const [customers, setCustomers] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
