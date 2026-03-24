@@ -121,6 +121,7 @@ export default function Customers() {
             <DialogTrigger asChild>
               <Button onClick={openNew}><Plus className="h-4 w-4 mr-2" />Add Customer</Button>
             </DialogTrigger>
+            <FileImport target="customers" onComplete={fetchCustomers} />
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>{editing ? "Edit Customer" : "New Customer"}</DialogTitle>
