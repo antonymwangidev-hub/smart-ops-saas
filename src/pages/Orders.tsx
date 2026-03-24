@@ -178,7 +178,7 @@ export default function Orders() {
                 ) : filtered.map((o) => (
                   <TableRow key={o.id}>
                     <TableCell className="font-medium">{o.customers?.name || "—"}</TableCell>
-                    <TableCell>${Number(o.amount).toLocaleString()}</TableCell>
+                    <TableCell>{formatAmount(Number(o.amount))}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className={statusColors[o.status]}>{o.status}</Badge>
                     </TableCell>
