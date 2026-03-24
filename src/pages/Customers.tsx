@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Search, Pencil, Trash2, Loader2 } from "lucide-react";
+import { FileImport } from "@/components/FileImport";
 import { useToast } from "@/hooks/use-toast";
 
 interface Customer {
@@ -120,6 +121,7 @@ export default function Customers() {
             <DialogTrigger asChild>
               <Button onClick={openNew}><Plus className="h-4 w-4 mr-2" />Add Customer</Button>
             </DialogTrigger>
+            <FileImport target="customers" onComplete={fetchCustomers} />
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>{editing ? "Edit Customer" : "New Customer"}</DialogTitle>

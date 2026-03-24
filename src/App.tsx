@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { OrgProvider } from "@/contexts/OrgContext";
+import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
@@ -16,6 +17,7 @@ import Automations from "./pages/Automations";
 import Analytics from "./pages/Analytics";
 import Notifications from "./pages/Notifications";
 import AppSettings from "./pages/AppSettings";
+import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,13 +26,14 @@ const App = () => (
   <ThemeProvider>
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
+      <CurrencyProvider>
       <Toaster />
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
           <OrgProvider>
             <Routes>
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/" element={<Landing />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/dashboard" element={<Dashboard />} />
@@ -46,6 +49,7 @@ const App = () => (
           </OrgProvider>
         </AuthProvider>
       </BrowserRouter>
+      </CurrencyProvider>
     </TooltipProvider>
   </QueryClientProvider>
   </ThemeProvider>

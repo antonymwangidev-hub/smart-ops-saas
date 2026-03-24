@@ -13,6 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Loader2 } from "lucide-react";
+import { FileImport } from "@/components/FileImport";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import { useToast } from "@/hooks/use-toast";
 
 type OrderStatus = "pending" | "completed" | "cancelled";
@@ -37,6 +39,7 @@ export default function Orders() {
   const { currentOrg } = useOrg();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { formatAmount } = useCurrency();
   const [orders, setOrders] = useState<Order[]>([]);
   const [customers, setCustomers] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -117,6 +120,7 @@ export default function Orders() {
             <DialogTrigger asChild>
               <Button><Plus className="h-4 w-4 mr-2" />New Order</Button>
             </DialogTrigger>
+            <FileImport target="orders" onComplete={fetchData} />
             <DialogContent>
               <DialogHeader><DialogTitle>Create Order</DialogTitle></DialogHeader>
               <form onSubmit={handleCreate} className="space-y-4">
@@ -174,7 +178,7 @@ export default function Orders() {
                 ) : filtered.map((o) => (
                   <TableRow key={o.id}>
                     <TableCell className="font-medium">{o.customers?.name || "—"}</TableCell>
-                    <TableCell>${Number(o.amount).toLocaleString()}</TableCell>
+                    <TableCell>{formatAmount(Number(o.amount))}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className={statusColors[o.status]}>{o.status}</Badge>
                     </TableCell>

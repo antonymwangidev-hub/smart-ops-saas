@@ -8,6 +8,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { HealthScoreCard } from "@/components/HealthScoreCard";
 import { AiAssistant } from "@/components/AiAssistant";
 import { useTheme } from "@/components/ThemeProvider";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 interface Stats {
   customers: number;
@@ -40,6 +41,7 @@ function AnimatedCounter({ value, prefix = "" }: { value: number | string; prefi
 export default function Dashboard() {
   const { currentOrg } = useOrg();
   const { resolvedTheme } = useTheme();
+  const { formatAmount } = useCurrency();
   const [stats, setStats] = useState<Stats>({ customers: 0, orders: 0, revenue: 0, pendingOrders: 0 });
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -69,7 +71,7 @@ export default function Dashboard() {
   const statCards = [
     { title: "Total Customers", value: stats.customers, icon: Users, color: "text-primary", bg: "from-primary/10 to-primary/5" },
     { title: "Total Orders", value: stats.orders, icon: ShoppingCart, color: "text-secondary", bg: "from-secondary/10 to-secondary/5" },
-    { title: "Revenue", value: stats.revenue, prefix: "$", icon: DollarSign, color: "text-success", bg: "from-success/10 to-success/5" },
+    { title: "Revenue", value: stats.revenue, format: true, icon: DollarSign, color: "text-success", bg: "from-success/10 to-success/5" },
     { title: "Pending Orders", value: stats.pendingOrders, icon: TrendingUp, color: "text-warning", bg: "from-warning/10 to-warning/5" },
   ];
 
@@ -100,7 +102,11 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-foreground">
-                  {loaded ? <AnimatedCounter value={stat.value} prefix={stat.prefix || ""} /> : "—"}
+                  {loaded ? (
+                    (stat as any).format
+                      ? formatAmount(stat.value)
+                      : <AnimatedCounter value={stat.value} />
+                  ) : "—"}
                 </div>
               </CardContent>
             </Card>
