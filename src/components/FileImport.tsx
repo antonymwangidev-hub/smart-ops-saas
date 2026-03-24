@@ -137,7 +137,7 @@ export function FileImport({ target, onComplete }: { target: ImportTarget; onCom
         }
       }
 
-      const { error } = await supabase.from(target).insert(record);
+      const { error } = await supabase.from(target).insert(record as any);
       if (error) errors++;
       else success++;
     }
