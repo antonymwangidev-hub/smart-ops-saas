@@ -48,6 +48,7 @@ export default function Orders() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [form, setForm] = useState({ customer_id: "", amount: "", status: "pending" as OrderStatus, notes: "" });
   const [submitting, setSubmitting] = useState(false);
+  const [mpesaOrder, setMpesaOrder] = useState<Order | null>(null);
 
   const fetchData = async () => {
     if (!currentOrg) return;
