@@ -12,8 +12,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2, Smartphone } from "lucide-react";
 import { FileImport } from "@/components/FileImport";
+import { MpesaPaymentDialog } from "@/components/MpesaPaymentDialog";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -47,6 +48,7 @@ export default function Orders() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [form, setForm] = useState({ customer_id: "", amount: "", status: "pending" as OrderStatus, notes: "" });
   const [submitting, setSubmitting] = useState(false);
+  const [mpesaOrder, setMpesaOrder] = useState<Order | null>(null);
 
   const fetchData = async () => {
     if (!currentOrg) return;
@@ -183,7 +185,13 @@ export default function Orders() {
                       <Badge variant="outline" className={statusColors[o.status]}>{o.status}</Badge>
                     </TableCell>
                     <TableCell>{new Date(o.created_at).toLocaleDateString()}</TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right flex items-center gap-2 justify-end">
+                      {o.status === "pending" && (
+                        <Button size="sm" variant="outline" onClick={() => setMpesaOrder(o)} className="gap-1">
+                          <Smartphone className="h-3.5 w-3.5" />
+                          M-Pesa
+                        </Button>
+                      )}
                       <Select value={o.status} onValueChange={(v) => updateStatus(o.id, v as OrderStatus)}>
                         <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
                         <SelectContent>
@@ -200,6 +208,14 @@ export default function Orders() {
           </CardContent>
         </Card>
       </div>
+
+      <MpesaPaymentDialog
+        open={!!mpesaOrder}
+        onOpenChange={(open) => !open && setMpesaOrder(null)}
+        orderId={mpesaOrder?.id || ""}
+        amount={mpesaOrder?.amount || 0}
+        customerName={mpesaOrder?.customers?.name || undefined}
+      />
     </AppLayout>
   );
 }
