@@ -208,6 +208,14 @@ export default function Orders() {
           </CardContent>
         </Card>
       </div>
+
+      <MpesaPaymentDialog
+        open={!!mpesaOrder}
+        onOpenChange={(open) => !open && setMpesaOrder(null)}
+        orderId={mpesaOrder?.id || ""}
+        amount={mpesaOrder?.amount || 0}
+        customerName={mpesaOrder?.customers?.name || undefined}
+      />
     </AppLayout>
   );
 }
