@@ -185,7 +185,13 @@ export default function Orders() {
                       <Badge variant="outline" className={statusColors[o.status]}>{o.status}</Badge>
                     </TableCell>
                     <TableCell>{new Date(o.created_at).toLocaleDateString()}</TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right flex items-center gap-2 justify-end">
+                      {o.status === "pending" && (
+                        <Button size="sm" variant="outline" onClick={() => setMpesaOrder(o)} className="gap-1">
+                          <Smartphone className="h-3.5 w-3.5" />
+                          M-Pesa
+                        </Button>
+                      )}
                       <Select value={o.status} onValueChange={(v) => updateStatus(o.id, v as OrderStatus)}>
                         <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
                         <SelectContent>
