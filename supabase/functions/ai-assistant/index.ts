@@ -37,11 +37,12 @@ serve(async (req) => {
     const userMessage = messages[messages.length - 1]?.content?.toLowerCase() || "";
 
     // Fetch business data in parallel
-    const [custRes, orderRes, taskRes, activityRes] = await Promise.all([
+    const [custRes, orderRes, taskRes, activityRes, docsRes] = await Promise.all([
       supabase.from("customers").select("*").eq("organization_id", orgId),
       supabase.from("orders").select("*, customers(name)").eq("organization_id", orgId),
       supabase.from("tasks").select("*").eq("organization_id", orgId),
       supabase.from("activity_logs").select("*").eq("organization_id", orgId).order("created_at", { ascending: false }).limit(50),
+      supabase.from("file_attachments").select("*").eq("organization_id", orgId).eq("entity_type", "business_document").order("created_at", { ascending: false }),
     ]);
 
     const customers = custRes.data || [];
