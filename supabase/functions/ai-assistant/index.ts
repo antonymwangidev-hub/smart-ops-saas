@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.100.0";
+// @ts-ignore — pdf-parse works in Deno via npm: specifier
+import pdfParse from "npm:pdf-parse@1.1.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -51,6 +53,27 @@ serve(async (req) => {
     const activities = activityRes.data || [];
     const documents = docsRes.data || [];
 
+    // Extract text from PDF documents (up to 5 most recent, max 2000 chars each)
+    const pdfDocs = documents.filter((d: any) => 
+      d.file_name?.toLowerCase().endsWith('.pdf')
+    ).slice(0, 5);
+
+    const docContents: { name: string; text: string }[] = [];
+    for (const doc of pdfDocs) {
+      try {
+        const res = await fetch(doc.file_url);
+        if (!res.ok) continue;
+        const buffer = await res.arrayBuffer();
+        const parsed = await pdfParse(Buffer.from(buffer));
+        const text = (parsed.text || "").trim().slice(0, 2000);
+        if (text) {
+          docContents.push({ name: doc.file_name, text });
+        }
+      } catch (e) {
+        console.error(`PDF extraction failed for ${doc.file_name}:`, e);
+      }
+    }
+
     // Build context summary for AI
     const completedOrders = orders.filter((o: any) => o.status === "completed");
     const pendingOrders = orders.filter((o: any) => o.status === "pending");
@@ -90,6 +113,10 @@ serve(async (req) => {
     const inProgressTasks = tasks.filter((t: any) => t.status === "in_progress");
     const doneTasks = tasks.filter((t: any) => t.status === "done");
 
+    const documentContentSection = docContents.length > 0
+      ? `\n\nExtracted Document Contents:\n${docContents.map(d => `--- ${d.name} ---\n${d.text}`).join("\n\n")}`
+      : "";
+
     const businessContext = `
 Business Data Summary for this organization:
 - Total customers: ${customers.length} (${customersThisWeek.length} new this week)
@@ -102,6 +129,7 @@ Business Data Summary for this organization:
 - Tasks: ${todoTasks.length} todo, ${inProgressTasks.length} in progress, ${doneTasks.length} done
 - Recent activity: ${activities.length} events logged
 - Business documents uploaded: ${documents.length} — ${documents.slice(0, 10).map((d: any) => d.file_name).join(", ") || "None"}
+${documentContentSection}
 `;
 
     // Use Lovable AI
