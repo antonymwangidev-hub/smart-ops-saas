@@ -101,6 +101,7 @@ Business Data Summary for this organization:
 - Inactive customers (no orders in 7 days): ${inactiveCustomers.length} — ${inactiveCustomers.slice(0, 5).map((c: any) => c.name).join(", ") || "None"}
 - Tasks: ${todoTasks.length} todo, ${inProgressTasks.length} in progress, ${doneTasks.length} done
 - Recent activity: ${activities.length} events logged
+- Business documents uploaded: ${documents.length} — ${documents.slice(0, 10).map((d: any) => d.file_name).join(", ") || "None"}
 `;
 
     // Use Lovable AI

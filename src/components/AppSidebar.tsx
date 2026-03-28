@@ -17,6 +17,7 @@ const navItems = [
   { title: "Orders", url: "/orders", icon: ShoppingCart },
   { title: "Tasks", url: "/tasks", icon: CheckSquare },
   { title: "Automations", url: "/automations", icon: Zap },
+  { title: "Documents", url: "/documents", icon: FileText },
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
 ];
 

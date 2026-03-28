@@ -179,12 +179,12 @@ export function FileImport({ target, onComplete }: { target: ImportTarget; onCom
               >
                 <FileSpreadsheet className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-sm font-medium text-foreground">Drop your file here or click to browse</p>
-                <p className="text-xs text-muted-foreground mt-2">Supports .xlsx, .csv files</p>
+                <p className="text-xs text-muted-foreground mt-2">Supports .xlsx, .xls, .csv, .tsv, .ods files</p>
               </div>
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".xlsx,.xls,.csv"
+                accept=".xlsx,.xls,.csv,.tsv,.ods"
                 className="hidden"
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
               />
