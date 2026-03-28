@@ -122,6 +122,37 @@ export default function Automations() {
                     <Input value={form.actionValue} onChange={(e) => setForm({ ...form, actionValue: e.target.value })} placeholder="New customer added!" />
                   </div>
                 )}
+                {form.actionType === "assign_task" && (
+                  <div className="space-y-2">
+                    <Label>Task Title to Assign</Label>
+                    <Input value={form.actionValue} onChange={(e) => setForm({ ...form, actionValue: e.target.value })} placeholder="Review and process order" />
+                  </div>
+                )}
+                {form.actionType === "update_order_status" && (
+                  <div className="space-y-2">
+                    <Label>New Status</Label>
+                    <Select value={form.actionValue} onValueChange={(v) => setForm({ ...form, actionValue: v })}>
+                      <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                {form.actionType === "tag_customer" && (
+                  <div className="space-y-2">
+                    <Label>Tag / Note</Label>
+                    <Input value={form.actionValue} onChange={(e) => setForm({ ...form, actionValue: e.target.value })} placeholder="VIP, High-value, etc." />
+                  </div>
+                )}
+                {form.actionType === "generate_report" && (
+                  <div className="space-y-2">
+                    <Label>Report Focus</Label>
+                    <Input value={form.actionValue} onChange={(e) => setForm({ ...form, actionValue: e.target.value })} placeholder="Weekly sales summary" />
+                  </div>
+                )}
                 <Button type="submit" className="w-full" disabled={submitting}>
                   {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                   Create Rule
