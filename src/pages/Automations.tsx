@@ -17,12 +17,22 @@ const triggers = [
   { value: "customer_created", label: "Customer Created" },
   { value: "order_created", label: "Order Created" },
   { value: "order_completed", label: "Order Completed" },
+  { value: "order_cancelled", label: "Order Cancelled" },
+  { value: "task_created", label: "Task Created" },
+  { value: "task_completed", label: "Task Completed" },
+  { value: "document_uploaded", label: "Document Uploaded" },
+  { value: "payment_received", label: "Payment Received" },
+  { value: "payment_failed", label: "Payment Failed" },
 ];
 
 const actions = [
   { value: "create_task", label: "Create Task" },
   { value: "send_notification", label: "Send Notification" },
   { value: "log_event", label: "Log Event" },
+  { value: "update_order_status", label: "Update Order Status" },
+  { value: "assign_task", label: "Assign Task to Team" },
+  { value: "generate_report", label: "Generate AI Report" },
+  { value: "tag_customer", label: "Tag Customer" },
 ];
 
 export default function Automations() {

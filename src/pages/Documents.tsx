@@ -355,12 +355,34 @@ export default function Documents() {
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <span className="text-lg">{getFileIcon(doc.file_name)}</span>
-                          <span className="font-medium truncate max-w-[300px]">{doc.file_name}</span>
+                          <div className="flex flex-col">
+                            <span className="font-medium truncate max-w-[300px]">{doc.file_name}</span>
+                            {summaries[doc.id] && (
+                              <div className="mt-1 text-xs text-muted-foreground prose prose-xs dark:prose-invert max-w-md">
+                                <ReactMarkdown>{summaries[doc.id]}</ReactMarkdown>
+                              </div>
+                            )}
+                            {summarizing[doc.id] && (
+                              <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                                Generating summary...
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell>{formatSize(doc.file_size)}</TableCell>
                       <TableCell>{new Date(doc.created_at).toLocaleDateString()}</TableCell>
                       <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => generateSummary(doc.id, doc.file_name)}
+                          disabled={summarizing[doc.id]}
+                          title="Generate AI Summary"
+                        >
+                          <Sparkles className="h-4 w-4" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"
