@@ -49,6 +49,7 @@ serve(async (req) => {
     const orders = orderRes.data || [];
     const tasks = taskRes.data || [];
     const activities = activityRes.data || [];
+    const documents = docsRes.data || [];
 
     // Build context summary for AI
     const completedOrders = orders.filter((o: any) => o.status === "completed");
