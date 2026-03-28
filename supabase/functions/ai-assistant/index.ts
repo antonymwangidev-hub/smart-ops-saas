@@ -37,17 +37,19 @@ serve(async (req) => {
     const userMessage = messages[messages.length - 1]?.content?.toLowerCase() || "";
 
     // Fetch business data in parallel
-    const [custRes, orderRes, taskRes, activityRes] = await Promise.all([
+    const [custRes, orderRes, taskRes, activityRes, docsRes] = await Promise.all([
       supabase.from("customers").select("*").eq("organization_id", orgId),
       supabase.from("orders").select("*, customers(name)").eq("organization_id", orgId),
       supabase.from("tasks").select("*").eq("organization_id", orgId),
       supabase.from("activity_logs").select("*").eq("organization_id", orgId).order("created_at", { ascending: false }).limit(50),
+      supabase.from("file_attachments").select("*").eq("organization_id", orgId).eq("entity_type", "business_document").order("created_at", { ascending: false }),
     ]);
 
     const customers = custRes.data || [];
     const orders = orderRes.data || [];
     const tasks = taskRes.data || [];
     const activities = activityRes.data || [];
+    const documents = docsRes.data || [];
 
     // Build context summary for AI
     const completedOrders = orders.filter((o: any) => o.status === "completed");
@@ -99,6 +101,7 @@ Business Data Summary for this organization:
 - Inactive customers (no orders in 7 days): ${inactiveCustomers.length} — ${inactiveCustomers.slice(0, 5).map((c: any) => c.name).join(", ") || "None"}
 - Tasks: ${todoTasks.length} todo, ${inProgressTasks.length} in progress, ${doneTasks.length} done
 - Recent activity: ${activities.length} events logged
+- Business documents uploaded: ${documents.length} — ${documents.slice(0, 10).map((d: any) => d.file_name).join(", ") || "None"}
 `;
 
     // Use Lovable AI

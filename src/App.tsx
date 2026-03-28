@@ -17,6 +17,7 @@ import Automations from "./pages/Automations";
 import Analytics from "./pages/Analytics";
 import Notifications from "./pages/Notifications";
 import AppSettings from "./pages/AppSettings";
+import Documents from "./pages/Documents";
 import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
 
@@ -41,6 +42,7 @@ const App = () => (
               <Route path="/orders" element={<Orders />} />
               <Route path="/tasks" element={<Tasks />} />
               <Route path="/automations" element={<Automations />} />
+              <Route path="/documents" element={<Documents />} />
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/notifications" element={<Notifications />} />
               <Route path="/settings" element={<AppSettings />} />
