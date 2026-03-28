@@ -17,6 +17,7 @@ import Automations from "./pages/Automations";
 import Analytics from "./pages/Analytics";
 import Notifications from "./pages/Notifications";
 import AppSettings from "./pages/AppSettings";
+import Documents from "./pages/Documents";
 import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
 
