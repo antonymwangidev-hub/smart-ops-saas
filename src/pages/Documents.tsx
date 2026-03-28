@@ -51,9 +51,70 @@ export default function Documents() {
     fetchDocs();
   }, [currentOrg]);
 
+  const [summaries, setSummaries] = useState<Record<string, string>>({});
+  const [summarizing, setSummarizing] = useState<Record<string, boolean>>({});
+
+  const generateSummary = async (docId: string, fileName: string) => {
+    if (!currentOrg || !session?.access_token) return;
+    setSummarizing(prev => ({ ...prev, [docId]: true }));
+    try {
+      const resp = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-assistant`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            messages: [{
+              role: "user",
+              content: `Generate a concise summary (3-5 bullet points) of the document "${fileName}". Focus on key insights, important data points, and actionable takeaways. If you can read the document content, analyze it. Otherwise, infer what you can from the filename and business context.`,
+            }],
+            orgId: currentOrg.id,
+          }),
+        }
+      );
+      if (!resp.ok) throw new Error("Summary failed");
+      const reader = resp.body?.getReader();
+      const decoder = new TextDecoder();
+      let content = "";
+      let buffer = "";
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          let nlIdx: number;
+          while ((nlIdx = buffer.indexOf("\n")) !== -1) {
+            let line = buffer.slice(0, nlIdx);
+            buffer = buffer.slice(nlIdx + 1);
+            if (line.endsWith("\r")) line = line.slice(0, -1);
+            if (!line.startsWith("data: ")) continue;
+            const jsonStr = line.slice(6).trim();
+            if (jsonStr === "[DONE]") break;
+            try {
+              const parsed = JSON.parse(jsonStr);
+              const delta = parsed.choices?.[0]?.delta?.content;
+              if (delta) {
+                content += delta;
+                setSummaries(prev => ({ ...prev, [docId]: content }));
+              }
+            } catch {}
+          }
+        }
+      }
+    } catch (e: any) {
+      setSummaries(prev => ({ ...prev, [docId]: `Error: ${e.message}` }));
+    } finally {
+      setSummarizing(prev => ({ ...prev, [docId]: false }));
+    }
+  };
+
   const handleUpload = async (files: FileList | null) => {
     if (!files || !currentOrg || !user) return;
     setUploading(true);
+    const uploadedDocIds: { id: string; name: string }[] = [];
 
     for (const file of Array.from(files)) {
       const path = `${currentOrg.id}/documents/${Date.now()}_${file.name}`;
@@ -65,23 +126,30 @@ export default function Documents() {
 
       const { data: urlData } = supabase.storage.from("attachments").getPublicUrl(path);
 
-      const { error: dbErr } = await supabase.from("file_attachments").insert({
+      const { data: inserted, error: dbErr } = await supabase.from("file_attachments").insert({
         organization_id: currentOrg.id,
         entity_id: currentOrg.id,
         entity_type: "business_document",
         file_name: file.name,
         file_url: urlData.publicUrl,
         file_size: file.size,
-      });
+      }).select("id").single();
 
       if (dbErr) {
         toast({ title: "Error saving record", description: dbErr.message, variant: "destructive" });
+      } else if (inserted) {
+        uploadedDocIds.push({ id: inserted.id, name: file.name });
       }
     }
 
     setUploading(false);
-    toast({ title: "Upload complete", description: "Documents uploaded successfully" });
-    fetchDocs();
+    toast({ title: "Upload complete", description: "Documents uploaded. Generating AI summaries..." });
+    await fetchDocs();
+
+    // Auto-generate summaries for uploaded documents
+    for (const doc of uploadedDocIds) {
+      generateSummary(doc.id, doc.name);
+    }
   };
 
   const handleDelete = async (doc: DocFile) => {
@@ -287,12 +355,34 @@ export default function Documents() {
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <span className="text-lg">{getFileIcon(doc.file_name)}</span>
-                          <span className="font-medium truncate max-w-[300px]">{doc.file_name}</span>
+                          <div className="flex flex-col">
+                            <span className="font-medium truncate max-w-[300px]">{doc.file_name}</span>
+                            {summaries[doc.id] && (
+                              <div className="mt-1 text-xs text-muted-foreground prose prose-xs dark:prose-invert max-w-md">
+                                <ReactMarkdown>{summaries[doc.id]}</ReactMarkdown>
+                              </div>
+                            )}
+                            {summarizing[doc.id] && (
+                              <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                                Generating summary...
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell>{formatSize(doc.file_size)}</TableCell>
                       <TableCell>{new Date(doc.created_at).toLocaleDateString()}</TableCell>
                       <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => generateSummary(doc.id, doc.file_name)}
+                          disabled={summarizing[doc.id]}
+                          title="Generate AI Summary"
+                        >
+                          <Sparkles className="h-4 w-4" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"

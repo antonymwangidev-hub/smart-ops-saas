@@ -17,12 +17,22 @@ const triggers = [
   { value: "customer_created", label: "Customer Created" },
   { value: "order_created", label: "Order Created" },
   { value: "order_completed", label: "Order Completed" },
+  { value: "order_cancelled", label: "Order Cancelled" },
+  { value: "task_created", label: "Task Created" },
+  { value: "task_completed", label: "Task Completed" },
+  { value: "document_uploaded", label: "Document Uploaded" },
+  { value: "payment_received", label: "Payment Received" },
+  { value: "payment_failed", label: "Payment Failed" },
 ];
 
 const actions = [
   { value: "create_task", label: "Create Task" },
   { value: "send_notification", label: "Send Notification" },
   { value: "log_event", label: "Log Event" },
+  { value: "update_order_status", label: "Update Order Status" },
+  { value: "assign_task", label: "Assign Task to Team" },
+  { value: "generate_report", label: "Generate AI Report" },
+  { value: "tag_customer", label: "Tag Customer" },
 ];
 
 export default function Automations() {
@@ -110,6 +120,37 @@ export default function Automations() {
                   <div className="space-y-2">
                     <Label>Notification Message</Label>
                     <Input value={form.actionValue} onChange={(e) => setForm({ ...form, actionValue: e.target.value })} placeholder="New customer added!" />
+                  </div>
+                )}
+                {form.actionType === "assign_task" && (
+                  <div className="space-y-2">
+                    <Label>Task Title to Assign</Label>
+                    <Input value={form.actionValue} onChange={(e) => setForm({ ...form, actionValue: e.target.value })} placeholder="Review and process order" />
+                  </div>
+                )}
+                {form.actionType === "update_order_status" && (
+                  <div className="space-y-2">
+                    <Label>New Status</Label>
+                    <Select value={form.actionValue} onValueChange={(v) => setForm({ ...form, actionValue: v })}>
+                      <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                {form.actionType === "tag_customer" && (
+                  <div className="space-y-2">
+                    <Label>Tag / Note</Label>
+                    <Input value={form.actionValue} onChange={(e) => setForm({ ...form, actionValue: e.target.value })} placeholder="VIP, High-value, etc." />
+                  </div>
+                )}
+                {form.actionType === "generate_report" && (
+                  <div className="space-y-2">
+                    <Label>Report Focus</Label>
+                    <Input value={form.actionValue} onChange={(e) => setForm({ ...form, actionValue: e.target.value })} placeholder="Weekly sales summary" />
                   </div>
                 )}
                 <Button type="submit" className="w-full" disabled={submitting}>
