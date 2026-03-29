@@ -56,6 +56,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </main>
         </div>
       </div>
+      <CommandPalette />
     </SidebarProvider>
   );
 }
