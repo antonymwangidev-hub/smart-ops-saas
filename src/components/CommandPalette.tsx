@@ -144,7 +144,11 @@ export function CommandPalette() {
       case "document": return "outline";
       default: return "outline";
     }
-  } as (type: string) => "default" | "secondary" | "outline";
+  };
+
+  const getTypeColor = (type: string): "default" | "secondary" | "outline" => {
+    return typeColor(type) as "default" | "secondary" | "outline";
+  };
 
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
