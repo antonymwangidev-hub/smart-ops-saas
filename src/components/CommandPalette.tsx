@@ -136,18 +136,12 @@ export function CommandPalette() {
     }
   };
 
-  const typeColor = (type: string) => {
+  const typeColor = (type: string): "default" | "secondary" | "outline" => {
     switch (type) {
       case "customer": return "default";
       case "order": return "secondary";
-      case "task": return "outline";
-      case "document": return "outline";
       default: return "outline";
     }
-  };
-
-  const getTypeColor = (type: string): "default" | "secondary" | "outline" => {
-    return typeColor(type) as "default" | "secondary" | "outline";
   };
 
   return (
