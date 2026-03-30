@@ -32,6 +32,7 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const { signOut, user } = useAuth();
   const { currentOrg, organizations, setCurrentOrg } = useOrg();
+  const { isPlatformAdmin } = usePlatformAdmin();
   const location = useLocation();
 
   return (
