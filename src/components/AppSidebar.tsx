@@ -1,6 +1,7 @@
 import {
-  LayoutDashboard, Users, ShoppingCart, CheckSquare, Zap, BarChart3, Settings, Bell, LogOut, ChevronDown, FileText
+  LayoutDashboard, Users, ShoppingCart, CheckSquare, Zap, BarChart3, Settings, Bell, LogOut, ChevronDown, FileText, Shield
 } from "lucide-react";
+import { usePlatformAdmin } from "@/hooks/usePlatformAdmin";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import {
