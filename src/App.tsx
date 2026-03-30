@@ -47,6 +47,7 @@ const App = () => (
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/notifications" element={<Notifications />} />
               <Route path="/settings" element={<AppSettings />} />
+              <Route path="/admin" element={<PlatformAdmin />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </OrgProvider>
