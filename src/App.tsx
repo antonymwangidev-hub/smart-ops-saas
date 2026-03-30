@@ -20,6 +20,7 @@ import AppSettings from "./pages/AppSettings";
 import Documents from "./pages/Documents";
 import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
+import PlatformAdmin from "./pages/PlatformAdmin";
 
 const queryClient = new QueryClient();
 
