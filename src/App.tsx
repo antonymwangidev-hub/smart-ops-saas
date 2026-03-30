@@ -20,6 +20,7 @@ import AppSettings from "./pages/AppSettings";
 import Documents from "./pages/Documents";
 import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
+import PlatformAdmin from "./pages/PlatformAdmin";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +47,7 @@ const App = () => (
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/notifications" element={<Notifications />} />
               <Route path="/settings" element={<AppSettings />} />
+              <Route path="/admin" element={<PlatformAdmin />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </OrgProvider>
