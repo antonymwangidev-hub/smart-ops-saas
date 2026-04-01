@@ -11,10 +11,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AppLayout } from "@/components/AppLayout";
 import {
   Shield, Users, Building2, BarChart3, Loader2, UserCheck, ShoppingCart,
-  CheckSquare, TrendingUp, Activity, Eye
+  CheckSquare, TrendingUp, Activity, KeyRound, Power, PowerOff, Copy, Check
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { useTheme } from "@/components/ThemeProvider";
+import { toast } from "sonner";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle
+} from "@/components/ui/dialog";
 
 interface PlatformStats {
   totalUsers: number;
@@ -29,6 +33,7 @@ interface OrgDetail {
   id: string;
   name: string;
   created_at: string;
+  is_active: boolean;
   memberCount: number;
   orderCount: number;
   revenue: number;
@@ -65,39 +70,53 @@ export default function PlatformAdmin() {
   const [users, setUsers] = useState<UserDetail[]>([]);
   const [orgGrowth, setOrgGrowth] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [resetDialog, setResetDialog] = useState<{ open: boolean; tempPassword?: string; email?: string }>({ open: false });
+  const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; title: string; description: string; onConfirm: () => void }>({
+    open: false, title: "", description: "", onConfirm: () => {},
+  });
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!isPlatformAdmin || adminLoading) return;
     fetchAllData();
   }, [isPlatformAdmin, adminLoading]);
 
+  const invokeAdminAction = async (body: Record<string, unknown>) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error("Not authenticated");
+    const res = await supabase.functions.invoke("admin-actions", { body });
+    if (res.error) throw res.error;
+    return res.data;
+  };
+
   const fetchAllData = async () => {
     setLoading(true);
     try {
-      // Fetch all data in parallel
-      const [orgsRes, membersRes, ordersRes, customersRes, tasksRes, profilesRes] = await Promise.all([
+      const [orgsRes, membersRes, ordersRes, customersRes, tasksRes, profilesRes, authUsersRes] = await Promise.all([
         supabase.from("organizations").select("*"),
         supabase.from("organization_members").select("*"),
         supabase.from("orders").select("*"),
         supabase.from("customers").select("id", { count: "exact", head: true }),
         supabase.from("tasks").select("id", { count: "exact", head: true }),
         supabase.from("profiles").select("*"),
+        invokeAdminAction({ action: "list_users" }).catch(() => ({ users: [] })),
       ]);
 
       const allOrgs = orgsRes.data || [];
       const allMembers = membersRes.data || [];
       const allOrders = ordersRes.data || [];
       const allProfiles = profilesRes.data || [];
+      const authUsers: { id: string; email: string; created_at: string; last_sign_in_at: string | null }[] = authUsersRes.users || [];
 
       const totalRevenue = allOrders
         .filter(o => o.status === "completed")
         .reduce((s, o) => s + Number(o.amount), 0);
 
-      // Unique user count from members
       const uniqueUserIds = new Set(allMembers.map(m => m.user_id));
 
       setStats({
-        totalUsers: uniqueUserIds.size,
+        totalUsers: Math.max(uniqueUserIds.size, authUsers.length),
         totalOrgs: allOrgs.length,
         totalOrders: allOrders.length,
         totalCustomers: customersRes.count || 0,
@@ -105,7 +124,6 @@ export default function PlatformAdmin() {
         totalRevenue,
       });
 
-      // Org details
       const orgDetails: OrgDetail[] = allOrgs.map(org => {
         const orgMembers = allMembers.filter(m => m.organization_id === org.id);
         const orgOrders = allOrders.filter(o => o.organization_id === org.id);
@@ -114,6 +132,7 @@ export default function PlatformAdmin() {
           id: org.id,
           name: org.name,
           created_at: org.created_at,
+          is_active: (org as any).is_active !== false,
           memberCount: orgMembers.length,
           orderCount: orgOrders.length,
           revenue: rev,
@@ -121,34 +140,98 @@ export default function PlatformAdmin() {
       });
       setOrgs(orgDetails);
 
-      // User details
-      const userDetails: UserDetail[] = Array.from(uniqueUserIds).map(uid => {
-        const profile = allProfiles.find(p => p.user_id === uid);
-        const userOrgs = allMembers.filter(m => m.user_id === uid);
+      // Build user details from auth users (more complete) merged with profiles
+      const userDetails: UserDetail[] = authUsers.map(au => {
+        const profile = allProfiles.find(p => p.user_id === au.id);
+        const userOrgs = allMembers.filter(m => m.user_id === au.id);
         return {
-          id: uid,
-          email: profile?.display_name || uid.slice(0, 8) + "…",
-          created_at: profile?.created_at || "",
-          last_sign_in_at: null,
+          id: au.id,
+          email: au.email || au.id.slice(0, 8) + "…",
+          created_at: au.created_at || "",
+          last_sign_in_at: au.last_sign_in_at,
           display_name: profile?.display_name || null,
           orgCount: userOrgs.length,
         };
       });
+      // Fallback: if auth users couldn't be fetched, use members
+      if (userDetails.length === 0) {
+        Array.from(uniqueUserIds).forEach(uid => {
+          const profile = allProfiles.find(p => p.user_id === uid);
+          const userOrgs = allMembers.filter(m => m.user_id === uid);
+          userDetails.push({
+            id: uid,
+            email: profile?.display_name || uid.slice(0, 8) + "…",
+            created_at: profile?.created_at || "",
+            last_sign_in_at: null,
+            display_name: profile?.display_name || null,
+            orgCount: userOrgs.length,
+          });
+        });
+      }
       setUsers(userDetails);
 
-      // Org growth chart (by month)
       const monthMap: Record<string, number> = {};
       allOrgs.forEach(org => {
         const month = new Date(org.created_at).toLocaleDateString("en", { year: "numeric", month: "short" });
         monthMap[month] = (monthMap[month] || 0) + 1;
       });
-      const growth = Object.entries(monthMap).map(([month, count]) => ({ month, count }));
-      setOrgGrowth(growth);
-
+      setOrgGrowth(Object.entries(monthMap).map(([month, count]) => ({ month, count })));
     } catch (err) {
       console.error("Admin fetch error:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleToggleOrg = (org: OrgDetail) => {
+    const newState = !org.is_active;
+    setConfirmDialog({
+      open: true,
+      title: newState ? "Activate Organization" : "Deactivate Organization",
+      description: newState
+        ? `Activate "${org.name}"? Members will regain access.`
+        : `Deactivate "${org.name}"? Members will lose access until reactivated.`,
+      onConfirm: async () => {
+        setConfirmDialog(prev => ({ ...prev, open: false }));
+        setActionLoading(org.id);
+        try {
+          await invokeAdminAction({ action: "toggle_org_active", org_id: org.id, is_active: newState });
+          toast.success(`Organization ${newState ? "activated" : "deactivated"}`);
+          setOrgs(prev => prev.map(o => o.id === org.id ? { ...o, is_active: newState } : o));
+        } catch (err: any) {
+          toast.error(err.message || "Failed to update organization");
+        } finally {
+          setActionLoading(null);
+        }
+      },
+    });
+  };
+
+  const handleResetPassword = (u: UserDetail) => {
+    setConfirmDialog({
+      open: true,
+      title: "Reset User Password",
+      description: `Generate a new temporary password for "${u.display_name || u.email}"? They will need to change it on next login.`,
+      onConfirm: async () => {
+        setConfirmDialog(prev => ({ ...prev, open: false }));
+        setActionLoading(u.id);
+        try {
+          const result = await invokeAdminAction({ action: "reset_user_password", user_id: u.id });
+          setResetDialog({ open: true, tempPassword: result.temp_password, email: result.email });
+        } catch (err: any) {
+          toast.error(err.message || "Failed to reset password");
+        } finally {
+          setActionLoading(null);
+        }
+      },
+    });
+  };
+
+  const copyPassword = async () => {
+    if (resetDialog.tempPassword) {
+      await navigator.clipboard.writeText(resetDialog.tempPassword);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
   };
 
@@ -184,7 +267,6 @@ export default function PlatformAdmin() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        {/* Header */}
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/20">
             <Shield className="h-5 w-5 text-primary-foreground" />
@@ -201,7 +283,6 @@ export default function PlatformAdmin() {
           </div>
         ) : (
           <>
-            {/* Stats Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
               {statCards.map((stat, idx) => (
                 <Card key={stat.title} className="glass glass-hover" style={{ animationDelay: `${idx * 60}ms` }}>
@@ -231,7 +312,6 @@ export default function PlatformAdmin() {
                 </TabsTrigger>
               </TabsList>
 
-              {/* Analytics Tab */}
               <TabsContent value="analytics" className="space-y-4">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <Card className="glass">
@@ -275,16 +355,7 @@ export default function PlatformAdmin() {
                       {orgPieData.length > 0 ? (
                         <ResponsiveContainer width="100%" height={260}>
                           <PieChart>
-                            <Pie
-                              data={orgPieData}
-                              cx="50%"
-                              cy="50%"
-                              innerRadius={60}
-                              outerRadius={100}
-                              paddingAngle={3}
-                              dataKey="value"
-                              label={({ name }) => name.slice(0, 12)}
-                            >
+                            <Pie data={orgPieData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={3} dataKey="value" label={({ name }) => name.slice(0, 12)}>
                               {orgPieData.map((_, i) => (
                                 <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                               ))}
@@ -300,7 +371,6 @@ export default function PlatformAdmin() {
                 </div>
               </TabsContent>
 
-              {/* Organizations Tab */}
               <TabsContent value="organizations">
                 <Card className="glass">
                   <CardHeader>
@@ -312,20 +382,27 @@ export default function PlatformAdmin() {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Name</TableHead>
+                          <TableHead>Status</TableHead>
                           <TableHead>Members</TableHead>
                           <TableHead>Orders</TableHead>
                           <TableHead>Revenue</TableHead>
                           <TableHead>Created</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {orgs.map(org => (
-                          <TableRow key={org.id}>
+                          <TableRow key={org.id} className={!org.is_active ? "opacity-60" : ""}>
                             <TableCell className="font-medium">
                               <div className="flex items-center gap-2">
                                 <Building2 className="h-4 w-4 text-muted-foreground" />
                                 {org.name}
                               </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={org.is_active ? "default" : "destructive"} className="text-xs">
+                                {org.is_active ? "Active" : "Deactivated"}
+                              </Badge>
                             </TableCell>
                             <TableCell>
                               <Badge variant="secondary">{org.memberCount}</Badge>
@@ -335,11 +412,27 @@ export default function PlatformAdmin() {
                             <TableCell className="text-muted-foreground text-sm">
                               {new Date(org.created_at).toLocaleDateString()}
                             </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                variant={org.is_active ? "destructive" : "default"}
+                                size="sm"
+                                disabled={actionLoading === org.id}
+                                onClick={() => handleToggleOrg(org)}
+                              >
+                                {actionLoading === org.id ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : org.is_active ? (
+                                  <><PowerOff className="h-3.5 w-3.5 mr-1" /> Deactivate</>
+                                ) : (
+                                  <><Power className="h-3.5 w-3.5 mr-1" /> Activate</>
+                                )}
+                              </Button>
+                            </TableCell>
                           </TableRow>
                         ))}
                         {orgs.length === 0 && (
                           <TableRow>
-                            <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                            <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                               No organizations found
                             </TableCell>
                           </TableRow>
@@ -350,7 +443,6 @@ export default function PlatformAdmin() {
                 </Card>
               </TabsContent>
 
-              {/* Users Tab */}
               <TabsContent value="users">
                 <Card className="glass">
                   <CardHeader>
@@ -362,8 +454,11 @@ export default function PlatformAdmin() {
                       <TableHeader>
                         <TableRow>
                           <TableHead>User</TableHead>
+                          <TableHead>Email</TableHead>
                           <TableHead>Organizations</TableHead>
+                          <TableHead>Last Sign In</TableHead>
                           <TableHead>Joined</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -374,23 +469,38 @@ export default function PlatformAdmin() {
                                 <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center">
                                   <Users className="h-3.5 w-3.5 text-primary" />
                                 </div>
-                                <div>
-                                  <div className="font-medium text-sm">{u.display_name || "User"}</div>
-                                  <div className="text-xs text-muted-foreground">{u.id.slice(0, 8)}…</div>
-                                </div>
+                                <span className="font-medium text-sm">{u.display_name || "User"}</span>
                               </div>
                             </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">{u.email}</TableCell>
                             <TableCell>
                               <Badge variant="outline">{u.orgCount} org{u.orgCount !== 1 ? "s" : ""}</Badge>
                             </TableCell>
                             <TableCell className="text-muted-foreground text-sm">
+                              {u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString() : "Never"}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground text-sm">
                               {u.created_at ? new Date(u.created_at).toLocaleDateString() : "—"}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={actionLoading === u.id}
+                                onClick={() => handleResetPassword(u)}
+                              >
+                                {actionLoading === u.id ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <><KeyRound className="h-3.5 w-3.5 mr-1" /> Reset Password</>
+                                )}
+                              </Button>
                             </TableCell>
                           </TableRow>
                         ))}
                         {users.length === 0 && (
                           <TableRow>
-                            <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
+                            <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                               No users found
                             </TableCell>
                           </TableRow>
@@ -404,6 +514,43 @@ export default function PlatformAdmin() {
           </>
         )}
       </div>
+
+      {/* Confirmation Dialog */}
+      <Dialog open={confirmDialog.open} onOpenChange={(open) => setConfirmDialog(prev => ({ ...prev, open }))}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{confirmDialog.title}</DialogTitle>
+            <DialogDescription>{confirmDialog.description}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmDialog(prev => ({ ...prev, open: false }))}>
+              Cancel
+            </Button>
+            <Button onClick={confirmDialog.onConfirm}>Confirm</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Password Reset Result Dialog */}
+      <Dialog open={resetDialog.open} onOpenChange={(open) => setResetDialog(prev => ({ ...prev, open }))}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Password Reset Successful</DialogTitle>
+            <DialogDescription>
+              A temporary password has been generated for <strong>{resetDialog.email}</strong>. Share it securely with the user.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-muted font-mono text-sm">
+            <span className="flex-1 select-all">{resetDialog.tempPassword}</span>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={copyPassword}>
+              {copied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
+            </Button>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setResetDialog({ open: false })}>Done</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
