@@ -146,6 +146,10 @@ export default function PlatformAdmin() {
       const userDetails: UserDetail[] = authUsers.map(au => {
         const profile = allProfiles.find(p => p.user_id === au.id);
         const userOrgs = allMembers.filter(m => m.user_id === au.id);
+        const userOrgDetails = userOrgs.map(m => {
+          const org = allOrgs.find(o => o.id === m.organization_id);
+          return { id: m.organization_id, name: org?.name || "Unknown" };
+        });
         return {
           id: au.id,
           email: au.email || au.id.slice(0, 8) + "…",
@@ -153,13 +157,17 @@ export default function PlatformAdmin() {
           last_sign_in_at: au.last_sign_in_at,
           display_name: profile?.display_name || null,
           orgCount: userOrgs.length,
+          orgs: userOrgDetails,
         };
       });
-      // Fallback: if auth users couldn't be fetched, use members
       if (userDetails.length === 0) {
         Array.from(uniqueUserIds).forEach(uid => {
           const profile = allProfiles.find(p => p.user_id === uid);
           const userOrgs = allMembers.filter(m => m.user_id === uid);
+          const userOrgDetails = userOrgs.map(m => {
+            const org = allOrgs.find(o => o.id === m.organization_id);
+            return { id: m.organization_id, name: org?.name || "Unknown" };
+          });
           userDetails.push({
             id: uid,
             email: profile?.display_name || uid.slice(0, 8) + "…",
@@ -167,6 +175,7 @@ export default function PlatformAdmin() {
             last_sign_in_at: null,
             display_name: profile?.display_name || null,
             orgCount: userOrgs.length,
+            orgs: userOrgDetails,
           });
         });
       }
