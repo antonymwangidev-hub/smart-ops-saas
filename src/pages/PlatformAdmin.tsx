@@ -228,6 +228,54 @@ export default function PlatformAdmin() {
     });
   };
 
+  const handleDeleteUser = (u: UserDetail) => {
+    if (u.id === user?.id) {
+      toast.error("You cannot delete your own account");
+      return;
+    }
+    setConfirmDialog({
+      open: true,
+      title: "Delete User",
+      description: `Permanently delete "${u.display_name || u.email}"? This will remove them from all organizations and cannot be undone.`,
+      onConfirm: async () => {
+        setConfirmDialog(prev => ({ ...prev, open: false }));
+        setActionLoading(u.id);
+        try {
+          await invokeAdminAction({ action: "delete_user", user_id: u.id });
+          toast.success("User deleted");
+          setUsers(prev => prev.filter(x => x.id !== u.id));
+          setStats(prev => ({ ...prev, totalUsers: prev.totalUsers - 1 }));
+        } catch (err: any) {
+          toast.error(err.message || "Failed to delete user");
+        } finally {
+          setActionLoading(null);
+        }
+      },
+    });
+  };
+
+  const handleRemoveFromOrg = (u: UserDetail, orgId: string, orgName: string) => {
+    setConfirmDialog({
+      open: true,
+      title: "Remove from Organization",
+      description: `Remove "${u.display_name || u.email}" from "${orgName}"?`,
+      onConfirm: async () => {
+        setConfirmDialog(prev => ({ ...prev, open: false }));
+        setActionLoading(`${u.id}-${orgId}`);
+        try {
+          await invokeAdminAction({ action: "remove_user_from_org", user_id: u.id, org_id: orgId });
+          toast.success("User removed from organization");
+          setUsers(prev => prev.map(x => x.id === u.id ? { ...x, orgCount: x.orgCount - 1 } : x));
+          setOrgs(prev => prev.map(o => o.id === orgId ? { ...o, memberCount: o.memberCount - 1 } : o));
+        } catch (err: any) {
+          toast.error(err.message || "Failed to remove user");
+        } finally {
+          setActionLoading(null);
+        }
+      },
+    });
+  };
+
   const copyPassword = async () => {
     if (resetDialog.tempPassword) {
       await navigator.clipboard.writeText(resetDialog.tempPassword);
