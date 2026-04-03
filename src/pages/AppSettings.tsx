@@ -20,6 +20,11 @@ export default function AppSettings() {
   const { theme, setTheme } = useTheme();
   const [orgName, setOrgName] = useState(currentOrg?.name || "");
   const [saving, setSaving] = useState(false);
+  const [aiEnabled, setAiEnabled] = useState(() => localStorage.getItem("ai_recommendations") !== "false");
+  const [autoEscalate, setAutoEscalate] = useState(() => localStorage.getItem("auto_escalate") !== "false");
+
+  const toggleAI = (v: boolean) => { setAiEnabled(v); localStorage.setItem("ai_recommendations", String(v)); };
+  const toggleEscalate = (v: boolean) => { setAutoEscalate(v); localStorage.setItem("auto_escalate", String(v)); };
 
   const handleSave = async () => {
     if (!currentOrg) return;
