@@ -47,6 +47,7 @@ interface UserDetail {
   last_sign_in_at: string | null;
   display_name: string | null;
   orgCount: number;
+  orgs: { id: string; name: string }[];
 }
 
 const PIE_COLORS = [
