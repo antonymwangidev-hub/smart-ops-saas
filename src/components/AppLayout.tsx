@@ -52,6 +52,15 @@ export function AppLayout({ children }: { children: ReactNode }) {
               </kbd>
             </Button>
             <div className="flex-1" />
+            <div className="flex items-center gap-1.5 mr-3 text-xs text-muted-foreground">
+              <Users className="h-3.5 w-3.5" />
+              <span>{onlineCount}</span>
+              <div className="flex -space-x-1 ml-1">
+                {onlineUsers.filter(u => u.status === "online").slice(0, 4).map(u => (
+                  <PresenceIndicator key={u.user_id} status="online" name={u.display_name} />
+                ))}
+              </div>
+            </div>
             <ThemeToggle />
           </header>
           <main className="flex-1 p-6 overflow-auto animate-fade-in">
