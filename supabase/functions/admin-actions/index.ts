@@ -108,6 +108,52 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (action === "delete_user") {
+      const { user_id } = body;
+      if (!user_id) {
+        return new Response(JSON.stringify({ error: "user_id required" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      // Prevent self-deletion
+      if (user_id === user.id) {
+        return new Response(JSON.stringify({ error: "Cannot delete your own account" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      // Remove from all orgs first
+      await adminClient.from("organization_members").delete().eq("user_id", user_id);
+      // Delete profile
+      await adminClient.from("profiles").delete().eq("user_id", user_id);
+      // Delete auth user
+      const { error: delError } = await adminClient.auth.admin.deleteUser(user_id);
+      if (delError) throw delError;
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "remove_user_from_org") {
+      const { user_id: targetUserId, org_id } = body;
+      if (!targetUserId || !org_id) {
+        return new Response(JSON.stringify({ error: "user_id and org_id required" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { error: rmError } = await adminClient
+        .from("organization_members")
+        .delete()
+        .eq("user_id", targetUserId)
+        .eq("organization_id", org_id);
+      if (rmError) throw rmError;
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     return new Response(JSON.stringify({ error: "Unknown action" }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

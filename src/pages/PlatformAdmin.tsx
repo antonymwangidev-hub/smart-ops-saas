@@ -11,7 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AppLayout } from "@/components/AppLayout";
 import {
   Shield, Users, Building2, BarChart3, Loader2, UserCheck, ShoppingCart,
-  CheckSquare, TrendingUp, Activity, KeyRound, Power, PowerOff, Copy, Check
+  CheckSquare, TrendingUp, Activity, KeyRound, Power, PowerOff, Copy, Check,
+  Trash2, UserMinus
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { useTheme } from "@/components/ThemeProvider";
@@ -46,6 +47,7 @@ interface UserDetail {
   last_sign_in_at: string | null;
   display_name: string | null;
   orgCount: number;
+  orgs: { id: string; name: string }[];
 }
 
 const PIE_COLORS = [
@@ -144,6 +146,10 @@ export default function PlatformAdmin() {
       const userDetails: UserDetail[] = authUsers.map(au => {
         const profile = allProfiles.find(p => p.user_id === au.id);
         const userOrgs = allMembers.filter(m => m.user_id === au.id);
+        const userOrgDetails = userOrgs.map(m => {
+          const org = allOrgs.find(o => o.id === m.organization_id);
+          return { id: m.organization_id, name: org?.name || "Unknown" };
+        });
         return {
           id: au.id,
           email: au.email || au.id.slice(0, 8) + "…",
@@ -151,13 +157,17 @@ export default function PlatformAdmin() {
           last_sign_in_at: au.last_sign_in_at,
           display_name: profile?.display_name || null,
           orgCount: userOrgs.length,
+          orgs: userOrgDetails,
         };
       });
-      // Fallback: if auth users couldn't be fetched, use members
       if (userDetails.length === 0) {
         Array.from(uniqueUserIds).forEach(uid => {
           const profile = allProfiles.find(p => p.user_id === uid);
           const userOrgs = allMembers.filter(m => m.user_id === uid);
+          const userOrgDetails = userOrgs.map(m => {
+            const org = allOrgs.find(o => o.id === m.organization_id);
+            return { id: m.organization_id, name: org?.name || "Unknown" };
+          });
           userDetails.push({
             id: uid,
             email: profile?.display_name || uid.slice(0, 8) + "…",
@@ -165,6 +175,7 @@ export default function PlatformAdmin() {
             last_sign_in_at: null,
             display_name: profile?.display_name || null,
             orgCount: userOrgs.length,
+            orgs: userOrgDetails,
           });
         });
       }
@@ -220,6 +231,54 @@ export default function PlatformAdmin() {
           setResetDialog({ open: true, tempPassword: result.temp_password, email: result.email });
         } catch (err: any) {
           toast.error(err.message || "Failed to reset password");
+        } finally {
+          setActionLoading(null);
+        }
+      },
+    });
+  };
+
+  const handleDeleteUser = (u: UserDetail) => {
+    if (u.id === user?.id) {
+      toast.error("You cannot delete your own account");
+      return;
+    }
+    setConfirmDialog({
+      open: true,
+      title: "Delete User",
+      description: `Permanently delete "${u.display_name || u.email}"? This will remove them from all organizations and cannot be undone.`,
+      onConfirm: async () => {
+        setConfirmDialog(prev => ({ ...prev, open: false }));
+        setActionLoading(u.id);
+        try {
+          await invokeAdminAction({ action: "delete_user", user_id: u.id });
+          toast.success("User deleted");
+          setUsers(prev => prev.filter(x => x.id !== u.id));
+          setStats(prev => ({ ...prev, totalUsers: prev.totalUsers - 1 }));
+        } catch (err: any) {
+          toast.error(err.message || "Failed to delete user");
+        } finally {
+          setActionLoading(null);
+        }
+      },
+    });
+  };
+
+  const handleRemoveFromOrg = (u: UserDetail, orgId: string, orgName: string) => {
+    setConfirmDialog({
+      open: true,
+      title: "Remove from Organization",
+      description: `Remove "${u.display_name || u.email}" from "${orgName}"?`,
+      onConfirm: async () => {
+        setConfirmDialog(prev => ({ ...prev, open: false }));
+        setActionLoading(`${u.id}-${orgId}`);
+        try {
+          await invokeAdminAction({ action: "remove_user_from_org", user_id: u.id, org_id: orgId });
+          toast.success("User removed from organization");
+          setUsers(prev => prev.map(x => x.id === u.id ? { ...x, orgCount: x.orgCount - 1 } : x));
+          setOrgs(prev => prev.map(o => o.id === orgId ? { ...o, memberCount: o.memberCount - 1 } : o));
+        } catch (err: any) {
+          toast.error(err.message || "Failed to remove user");
         } finally {
           setActionLoading(null);
         }
@@ -474,7 +533,26 @@ export default function PlatformAdmin() {
                             </TableCell>
                             <TableCell className="text-sm text-muted-foreground">{u.email}</TableCell>
                             <TableCell>
-                              <Badge variant="outline">{u.orgCount} org{u.orgCount !== 1 ? "s" : ""}</Badge>
+                              <div className="flex flex-wrap gap-1">
+                                {u.orgs.map(org => (
+                                  <Badge key={org.id} variant="outline" className="gap-1 pr-1">
+                                    {org.name}
+                                    <button
+                                      className="ml-0.5 rounded-full hover:bg-destructive/20 p-0.5"
+                                      disabled={actionLoading === `${u.id}-${org.id}`}
+                                      onClick={() => handleRemoveFromOrg(u, org.id, org.name)}
+                                      title={`Remove from ${org.name}`}
+                                    >
+                                      {actionLoading === `${u.id}-${org.id}` ? (
+                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                      ) : (
+                                        <UserMinus className="h-3 w-3 text-destructive" />
+                                      )}
+                                    </button>
+                                  </Badge>
+                                ))}
+                                {u.orgs.length === 0 && <span className="text-muted-foreground text-xs">None</span>}
+                              </div>
                             </TableCell>
                             <TableCell className="text-muted-foreground text-sm">
                               {u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString() : "Never"}
@@ -483,18 +561,28 @@ export default function PlatformAdmin() {
                               {u.created_at ? new Date(u.created_at).toLocaleDateString() : "—"}
                             </TableCell>
                             <TableCell className="text-right">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={actionLoading === u.id}
-                                onClick={() => handleResetPassword(u)}
-                              >
-                                {actionLoading === u.id ? (
-                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                ) : (
-                                  <><KeyRound className="h-3.5 w-3.5 mr-1" /> Reset Password</>
-                                )}
-                              </Button>
+                              <div className="flex items-center justify-end gap-1">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  disabled={actionLoading === u.id}
+                                  onClick={() => handleResetPassword(u)}
+                                >
+                                  {actionLoading === u.id ? (
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  ) : (
+                                    <><KeyRound className="h-3.5 w-3.5 mr-1" /> Reset</>
+                                  )}
+                                </Button>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  disabled={actionLoading === u.id || u.id === user?.id}
+                                  onClick={() => handleDeleteUser(u)}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
+                                </Button>
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))}
