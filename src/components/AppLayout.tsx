@@ -6,8 +6,10 @@ import { CommandPalette } from "./CommandPalette";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrg } from "@/contexts/OrgContext";
 import { Navigate } from "react-router-dom";
-import { Loader2, Search } from "lucide-react";
+import { Loader2, Search, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PresenceIndicator } from "@/components/PresenceIndicator";
+import { usePresence } from "@/hooks/usePresence";
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const { user, loading: authLoading } = useAuth();
