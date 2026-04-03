@@ -533,7 +533,26 @@ export default function PlatformAdmin() {
                             </TableCell>
                             <TableCell className="text-sm text-muted-foreground">{u.email}</TableCell>
                             <TableCell>
-                              <Badge variant="outline">{u.orgCount} org{u.orgCount !== 1 ? "s" : ""}</Badge>
+                              <div className="flex flex-wrap gap-1">
+                                {u.orgs.map(org => (
+                                  <Badge key={org.id} variant="outline" className="gap-1 pr-1">
+                                    {org.name}
+                                    <button
+                                      className="ml-0.5 rounded-full hover:bg-destructive/20 p-0.5"
+                                      disabled={actionLoading === `${u.id}-${org.id}`}
+                                      onClick={() => handleRemoveFromOrg(u, org.id, org.name)}
+                                      title={`Remove from ${org.name}`}
+                                    >
+                                      {actionLoading === `${u.id}-${org.id}` ? (
+                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                      ) : (
+                                        <UserMinus className="h-3 w-3 text-destructive" />
+                                      )}
+                                    </button>
+                                  </Badge>
+                                ))}
+                                {u.orgs.length === 0 && <span className="text-muted-foreground text-xs">None</span>}
+                              </div>
                             </TableCell>
                             <TableCell className="text-muted-foreground text-sm">
                               {u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString() : "Never"}
@@ -542,18 +561,28 @@ export default function PlatformAdmin() {
                               {u.created_at ? new Date(u.created_at).toLocaleDateString() : "—"}
                             </TableCell>
                             <TableCell className="text-right">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={actionLoading === u.id}
-                                onClick={() => handleResetPassword(u)}
-                              >
-                                {actionLoading === u.id ? (
-                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                ) : (
-                                  <><KeyRound className="h-3.5 w-3.5 mr-1" /> Reset Password</>
-                                )}
-                              </Button>
+                              <div className="flex items-center justify-end gap-1">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  disabled={actionLoading === u.id}
+                                  onClick={() => handleResetPassword(u)}
+                                >
+                                  {actionLoading === u.id ? (
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  ) : (
+                                    <><KeyRound className="h-3.5 w-3.5 mr-1" /> Reset</>
+                                  )}
+                                </Button>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  disabled={actionLoading === u.id || u.id === user?.id}
+                                  onClick={() => handleDeleteUser(u)}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
+                                </Button>
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))}
