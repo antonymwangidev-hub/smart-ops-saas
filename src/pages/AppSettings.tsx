@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useOrg } from "@/contexts/OrgContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Moon, Sun, Monitor } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Loader2, Moon, Sun, Monitor, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/components/ThemeProvider";
 
@@ -19,6 +20,11 @@ export default function AppSettings() {
   const { theme, setTheme } = useTheme();
   const [orgName, setOrgName] = useState(currentOrg?.name || "");
   const [saving, setSaving] = useState(false);
+  const [aiEnabled, setAiEnabled] = useState(() => localStorage.getItem("ai_recommendations") !== "false");
+  const [autoEscalate, setAutoEscalate] = useState(() => localStorage.getItem("auto_escalate") !== "false");
+
+  const toggleAI = (v: boolean) => { setAiEnabled(v); localStorage.setItem("ai_recommendations", String(v)); };
+  const toggleEscalate = (v: boolean) => { setAutoEscalate(v); localStorage.setItem("auto_escalate", String(v)); };
 
   const handleSave = async () => {
     if (!currentOrg) return;
@@ -85,6 +91,32 @@ export default function AppSettings() {
                   {opt.label}
                 </button>
               ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="glass">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              AI Features
+            </CardTitle>
+            <CardDescription>Configure AI-powered task automation</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>AI Task Recommendations</Label>
+                <p className="text-xs text-muted-foreground">Suggest priority, assignee, and effort when creating tasks</p>
+              </div>
+              <Switch checked={aiEnabled} onCheckedChange={toggleAI} />
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Auto-escalate Overdue Tasks</Label>
+                <p className="text-xs text-muted-foreground">Notify managers when tasks pass their due date</p>
+              </div>
+              <Switch checked={autoEscalate} onCheckedChange={toggleEscalate} />
             </div>
           </CardContent>
         </Card>
