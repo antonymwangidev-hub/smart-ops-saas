@@ -14,6 +14,7 @@ import { usePresence } from "@/hooks/usePresence";
 export function AppLayout({ children }: { children: ReactNode }) {
   const { user, loading: authLoading } = useAuth();
   const { currentOrg, loading: orgLoading } = useOrg();
+  const { onlineUsers, onlineCount } = usePresence();
 
   if (authLoading || orgLoading) {
     return (
