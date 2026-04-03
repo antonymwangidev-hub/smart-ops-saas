@@ -97,6 +97,32 @@ export default function AppSettings() {
 
         <Card className="glass">
           <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              AI Features
+            </CardTitle>
+            <CardDescription>Configure AI-powered task automation</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>AI Task Recommendations</Label>
+                <p className="text-xs text-muted-foreground">Suggest priority, assignee, and effort when creating tasks</p>
+              </div>
+              <Switch checked={aiEnabled} onCheckedChange={toggleAI} />
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Auto-escalate Overdue Tasks</Label>
+                <p className="text-xs text-muted-foreground">Notify managers when tasks pass their due date</p>
+              </div>
+              <Switch checked={autoEscalate} onCheckedChange={toggleEscalate} />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="glass">
+          <CardHeader>
             <CardTitle>Account</CardTitle>
             <CardDescription>Your account information</CardDescription>
           </CardHeader>
