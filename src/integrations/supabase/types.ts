@@ -422,33 +422,93 @@ export type Database = {
         }
         Relationships: []
       }
-      tasks: {
+      task_comments: {
         Row: {
-          assigned_to: string | null
+          content: string
           created_at: string
-          description: string | null
           id: string
           organization_id: string
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          organization_id: string
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          organization_id?: string
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_comments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_comments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tasks: {
+        Row: {
+          ai_confidence: number | null
+          ai_recommended: boolean | null
+          assigned_to: string | null
+          category: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          estimated_hours: number | null
+          id: string
+          organization_id: string
+          priority: string | null
           status: Database["public"]["Enums"]["task_status"]
           title: string
           updated_at: string
         }
         Insert: {
+          ai_confidence?: number | null
+          ai_recommended?: boolean | null
           assigned_to?: string | null
+          category?: string | null
           created_at?: string
           description?: string | null
+          due_date?: string | null
+          estimated_hours?: number | null
           id?: string
           organization_id: string
+          priority?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           title: string
           updated_at?: string
         }
         Update: {
+          ai_confidence?: number | null
+          ai_recommended?: boolean | null
           assigned_to?: string | null
+          category?: string | null
           created_at?: string
           description?: string | null
+          due_date?: string | null
+          estimated_hours?: number | null
           id?: string
           organization_id?: string
+          priority?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           title?: string
           updated_at?: string
@@ -456,6 +516,48 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "tasks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_presence: {
+        Row: {
+          current_task_id: string | null
+          id: string
+          last_seen: string
+          organization_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          current_task_id?: string | null
+          id?: string
+          last_seen?: string
+          organization_id: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          current_task_id?: string | null
+          id?: string
+          last_seen?: string
+          organization_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_presence_current_task_id_fkey"
+            columns: ["current_task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_presence_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
