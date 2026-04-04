@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   Plus, Loader2, CheckCircle2, Circle, Clock, Sparkles, MessageSquare, Activity as ActivityIcon,
-  Users, ArrowUp, ArrowRight, ArrowDown,
+  Users, ArrowUp, ArrowRight, ArrowDown, GripVertical,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { AIRecommendationCard, type AIRecommendation } from "@/components/AIRecommendationCard";
@@ -24,6 +24,7 @@ import { ActivityFeed } from "@/components/ActivityFeed";
 import { PresenceIndicator } from "@/components/PresenceIndicator";
 import { usePresence } from "@/hooks/usePresence";
 import { useAIRecommendations } from "@/hooks/useAIRecommendations";
+import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
 
 type TaskStatus = "todo" | "in_progress" | "done";
 
