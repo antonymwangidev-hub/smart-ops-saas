@@ -106,7 +106,7 @@ export default function Tasks() {
       insertData.ai_confidence = recommendation.confidence;
       insertData.estimated_hours = recommendation.estimated_hours;
       insertData.category = recommendation.category;
-      if (recommendation.suggested_assignee_id) {
+      if (recommendation.suggested_assignee_id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(recommendation.suggested_assignee_id)) {
         insertData.assigned_to = recommendation.suggested_assignee_id;
       }
     }
