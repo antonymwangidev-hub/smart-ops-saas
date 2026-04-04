@@ -128,7 +128,16 @@ export default function Tasks() {
     fetchTasks();
   };
 
-  const openTaskDetail = (task: any) => {
+  const onDragEnd = useCallback(async (result: DropResult) => {
+    const { draggableId, destination } = result;
+    if (!destination) return;
+    const newStatus = destination.droppableId as TaskStatus;
+    setTasks(prev => prev.map(t => t.id === draggableId ? { ...t, status: newStatus } : t));
+    await supabase.from("tasks").update({ status: newStatus }).eq("id", draggableId);
+    fetchTasks();
+  }, [fetchTasks]);
+
+
     setSelectedTask(task);
     setSheetOpen(true);
     updatePresence(task.id);
