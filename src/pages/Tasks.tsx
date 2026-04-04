@@ -137,7 +137,7 @@ export default function Tasks() {
     fetchTasks();
   }, [fetchTasks]);
 
-
+  const openTaskDetail = (task: any) => {
     setSelectedTask(task);
     setSheetOpen(true);
     updatePresence(task.id);
