@@ -233,71 +233,80 @@ export default function Tasks() {
         {loading ? (
           <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {columns.map((col) => (
-              <Card key={col.status}>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    {statusIcons[col.status]}
-                    {col.label}
-                    <Badge variant="secondary" className="ml-auto">{tasks.filter(t => t.status === col.status).length}</Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {tasks.filter(t => t.status === col.status).map((task) => {
-                    const taskOnlineUsers = onlineUsers.filter(u => u.current_task_id === task.id);
-                    return (
-                      <Card
-                        key={task.id}
-                        className="p-3 cursor-pointer hover:shadow-md transition-shadow"
-                        onClick={() => openTaskDetail(task)}
+          <DragDropContext onDragEnd={onDragEnd}>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {columns.map((col) => (
+                <Card key={col.status}>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-medium flex items-center gap-2">
+                      {statusIcons[col.status]}
+                      {col.label}
+                      <Badge variant="secondary" className="ml-auto">{tasks.filter(t => t.status === col.status).length}</Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <Droppable droppableId={col.status}>
+                    {(provided, snapshot) => (
+                      <CardContent
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        className={`space-y-2 min-h-[80px] transition-colors ${snapshot.isDraggingOver ? "bg-primary/5 rounded-b-lg" : ""}`}
                       >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              {priorityIcons[task.priority || "medium"]}
-                              <span className="font-medium text-sm truncate">{task.title}</span>
-                            </div>
-                            {task.description && (
-                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{task.description}</p>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-1 shrink-0">
-                            {task.ai_recommended && (
-                              <Badge variant="outline" className="text-[10px] px-1 border-primary/30 text-primary">
-                                <Sparkles className="h-2.5 w-2.5 mr-0.5" />AI
-                              </Badge>
-                            )}
-                            {taskOnlineUsers.map(u => (
-                              <PresenceIndicator key={u.user_id} status="online" name={u.display_name} />
-                            ))}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 mt-2">
-                          {task.category && (
-                            <Badge variant="secondary" className="text-[10px]">{task.category}</Badge>
-                          )}
-                          {task.estimated_hours && (
-                            <span className="text-[10px] text-muted-foreground">{task.estimated_hours}h</span>
-                          )}
-                          <div className="ml-auto" onClick={(e) => e.stopPropagation()}>
-                            <Select value={task.status} onValueChange={(v) => updateStatus(task.id, v as TaskStatus)}>
-                              <SelectTrigger className="h-6 text-[10px] w-24"><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="todo">To Do</SelectItem>
-                                <SelectItem value="in_progress">In Progress</SelectItem>
-                                <SelectItem value="done">Done</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                      </Card>
-                    );
-                  })}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                        {tasks.filter(t => t.status === col.status).map((task, index) => {
+                          const taskOnlineUsers = onlineUsers.filter(u => u.current_task_id === task.id);
+                          return (
+                            <Draggable key={task.id} draggableId={task.id} index={index}>
+                              {(provided, snapshot) => (
+                                <Card
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  className={`p-3 cursor-pointer hover:shadow-md transition-shadow ${snapshot.isDragging ? "shadow-lg ring-2 ring-primary/30 rotate-1" : ""}`}
+                                  onClick={() => openTaskDetail(task)}
+                                >
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="flex items-center gap-1.5 shrink-0" {...provided.dragHandleProps}>
+                                      <GripVertical className="h-3.5 w-3.5 text-muted-foreground/50" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-1.5">
+                                        {priorityIcons[task.priority || "medium"]}
+                                        <span className="font-medium text-sm truncate">{task.title}</span>
+                                      </div>
+                                      {task.description && (
+                                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{task.description}</p>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-1 shrink-0">
+                                      {task.ai_recommended && (
+                                        <Badge variant="outline" className="text-[10px] px-1 border-primary/30 text-primary">
+                                          <Sparkles className="h-2.5 w-2.5 mr-0.5" />AI
+                                        </Badge>
+                                      )}
+                                      {taskOnlineUsers.map(u => (
+                                        <PresenceIndicator key={u.user_id} status="online" name={u.display_name} />
+                                      ))}
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2 mt-2">
+                                    {task.category && (
+                                      <Badge variant="secondary" className="text-[10px]">{task.category}</Badge>
+                                    )}
+                                    {task.estimated_hours && (
+                                      <span className="text-[10px] text-muted-foreground">{task.estimated_hours}h</span>
+                                    )}
+                                  </div>
+                                </Card>
+                              )}
+                            </Draggable>
+                          );
+                        })}
+                        {provided.placeholder}
+                      </CardContent>
+                    )}
+                  </Droppable>
+                </Card>
+              ))}
+            </div>
+          </DragDropContext>
         )}
 
         {/* Activity Feed Section */}
