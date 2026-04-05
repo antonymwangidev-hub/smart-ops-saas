@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useOrg } from "@/contexts/OrgContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Loader2, Moon, Sun, Monitor, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/components/ThemeProvider";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
 
 export default function AppSettings() {
   const { currentOrg, refreshOrgs } = useOrg();
@@ -20,11 +21,7 @@ export default function AppSettings() {
   const { theme, setTheme } = useTheme();
   const [orgName, setOrgName] = useState(currentOrg?.name || "");
   const [saving, setSaving] = useState(false);
-  const [aiEnabled, setAiEnabled] = useState(() => localStorage.getItem("ai_recommendations") !== "false");
-  const [autoEscalate, setAutoEscalate] = useState(() => localStorage.getItem("auto_escalate") !== "false");
-
-  const toggleAI = (v: boolean) => { setAiEnabled(v); localStorage.setItem("ai_recommendations", String(v)); };
-  const toggleEscalate = (v: boolean) => { setAutoEscalate(v); localStorage.setItem("auto_escalate", String(v)); };
+  const { aiEnabled, autoEscalate, loading: prefsLoading, updatePreference } = useUserPreferences();
 
   const handleSave = async () => {
     if (!currentOrg) return;
@@ -109,14 +106,22 @@ export default function AppSettings() {
                 <Label>AI Task Recommendations</Label>
                 <p className="text-xs text-muted-foreground">Suggest priority, assignee, and effort when creating tasks</p>
               </div>
-              <Switch checked={aiEnabled} onCheckedChange={toggleAI} />
+              <Switch
+                checked={aiEnabled}
+                onCheckedChange={(v) => updatePreference({ ai_recommendations: v })}
+                disabled={prefsLoading}
+              />
             </div>
             <div className="flex items-center justify-between">
               <div>
                 <Label>Auto-escalate Overdue Tasks</Label>
                 <p className="text-xs text-muted-foreground">Notify managers when tasks pass their due date</p>
               </div>
-              <Switch checked={autoEscalate} onCheckedChange={toggleEscalate} />
+              <Switch
+                checked={autoEscalate}
+                onCheckedChange={(v) => updatePreference({ auto_escalate: v })}
+                disabled={prefsLoading}
+              />
             </div>
           </CardContent>
         </Card>
