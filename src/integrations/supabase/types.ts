@@ -523,6 +523,33 @@ export type Database = {
           },
         ]
       }
+      user_preferences: {
+        Row: {
+          ai_recommendations: boolean
+          auto_escalate: boolean
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_recommendations?: boolean
+          auto_escalate?: boolean
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_recommendations?: boolean
+          auto_escalate?: boolean
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_presence: {
         Row: {
           current_task_id: string | null
