@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { OrgProvider } from "@/contexts/OrgContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { PrivateRoute } from "@/components/PrivateRoute";
 import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
@@ -38,16 +39,16 @@ const App = () => (
               <Route path="/" element={<Landing />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/onboarding" element={<Onboarding />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/customers" element={<Customers />} />
-              <Route path="/orders" element={<Orders />} />
-              <Route path="/tasks" element={<Tasks />} />
-              <Route path="/automations" element={<Automations />} />
-              <Route path="/documents" element={<Documents />} />
-              <Route path="/analytics" element={<Analytics />} />
-              <Route path="/notifications" element={<Notifications />} />
-              <Route path="/settings" element={<AppSettings />} />
-              <Route path="/admin" element={<PlatformAdmin />} />
+              <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+              <Route path="/customers" element={<PrivateRoute><Customers /></PrivateRoute>} />
+              <Route path="/orders" element={<PrivateRoute><Orders /></PrivateRoute>} />
+              <Route path="/tasks" element={<PrivateRoute><Tasks /></PrivateRoute>} />
+              <Route path="/automations" element={<PrivateRoute><Automations /></PrivateRoute>} />
+              <Route path="/documents" element={<PrivateRoute><Documents /></PrivateRoute>} />
+              <Route path="/analytics" element={<PrivateRoute><Analytics /></PrivateRoute>} />
+              <Route path="/notifications" element={<PrivateRoute><Notifications /></PrivateRoute>} />
+              <Route path="/settings" element={<PrivateRoute><AppSettings /></PrivateRoute>} />
+              <Route path="/admin" element={<PrivateRoute><PlatformAdmin /></PrivateRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </OrgProvider>

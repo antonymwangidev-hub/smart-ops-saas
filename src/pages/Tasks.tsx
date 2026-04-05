@@ -1,4 +1,5 @@
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/contexts/OrgContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   Plus, Loader2, CheckCircle2, Circle, Clock, Sparkles, MessageSquare, Activity as ActivityIcon,
-  Users, ArrowUp, ArrowRight, ArrowDown, GripVertical,
+  Users, ArrowUp, ArrowRight, ArrowDown, GripVertical, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { AIRecommendationCard, type AIRecommendation } from "@/components/AIRecommendationCard";
@@ -27,6 +28,7 @@ import { useAIRecommendations } from "@/hooks/useAIRecommendations";
 import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
 
 type TaskStatus = "todo" | "in_progress" | "done";
+const PAGE_SIZE = 50;
 
 const statusIcons: Record<TaskStatus, React.ReactNode> = {
   todo: <Circle className="h-4 w-4 text-muted-foreground" />,
@@ -44,32 +46,49 @@ export default function Tasks() {
   const { currentOrg } = useOrg();
   const { user } = useAuth();
   const { toast } = useToast();
-  const [tasks, setTasks] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState({ title: "", description: "", status: "todo" as TaskStatus, priority: "medium", due_date: "" });
-  const [submitting, setSubmitting] = useState(false);
   const [selectedTask, setSelectedTask] = useState<any | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [page, setPage] = useState(0);
   const { onlineUsers, onlineCount, updatePresence } = usePresence();
   const { recommendation, loading: aiLoading, getRecommendation, dismiss, setRecommendation } = useAIRecommendations();
 
-  const fetchTasks = useCallback(async () => {
-    if (!currentOrg) return;
-    const { data } = await supabase.from("tasks").select("*").eq("organization_id", currentOrg.id).order("created_at", { ascending: false });
-    setTasks(data || []);
-    setLoading(false);
-  }, [currentOrg]);
+  const { data: tasksData, isLoading } = useQuery({
+    queryKey: ["tasks", currentOrg?.id, page],
+    queryFn: async () => {
+      if (!currentOrg) return { tasks: [], count: 0 };
+      const from = page * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+      const { data, count } = await supabase
+        .from("tasks")
+        .select("*", { count: "exact" })
+        .eq("organization_id", currentOrg.id)
+        .order("created_at", { ascending: false })
+        .range(from, to);
+      return { tasks: data || [], count: count || 0 };
+    },
+    enabled: !!currentOrg,
+  });
 
-  useEffect(() => { fetchTasks(); }, [fetchTasks]);
+  const [localTasks, setLocalTasks] = useState<any[]>([]);
+  useEffect(() => {
+    if (tasksData?.tasks) setLocalTasks(tasksData.tasks);
+  }, [tasksData?.tasks]);
+
+  const totalCount = tasksData?.count || 0;
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   useEffect(() => {
     if (!currentOrg) return;
     const channel = supabase.channel("tasks-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "tasks", filter: `organization_id=eq.${currentOrg.id}` }, () => fetchTasks())
+      .on("postgres_changes", { event: "*", schema: "public", table: "tasks", filter: `organization_id=eq.${currentOrg.id}` }, () =>
+        queryClient.invalidateQueries({ queryKey: ["tasks", currentOrg.id] })
+      )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [currentOrg, fetchTasks]);
+  }, [currentOrg, queryClient]);
 
   // Trigger AI when title has 5+ chars
   useEffect(() => {
@@ -82,60 +101,53 @@ export default function Tasks() {
   }, [form.title, form.description, dialogOpen]);
 
   const handleAcceptAI = (rec: AIRecommendation) => {
-    setForm(prev => ({
-      ...prev,
-      priority: rec.priority,
-    }));
+    setForm(prev => ({ ...prev, priority: rec.priority }));
     toast({ title: "AI recommendation applied" });
   };
 
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!currentOrg) return;
-    setSubmitting(true);
-    const insertData: any = {
-      organization_id: currentOrg.id,
-      title: form.title,
-      description: form.description || null,
-      status: form.status,
-      priority: form.priority,
-      due_date: form.due_date || null,
-    };
-
-    if (recommendation) {
-      insertData.ai_recommended = true;
-      insertData.ai_confidence = recommendation.confidence;
-      insertData.estimated_hours = recommendation.estimated_hours;
-      insertData.category = recommendation.category;
-      if (recommendation.suggested_assignee_id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(recommendation.suggested_assignee_id)) {
-        insertData.assigned_to = recommendation.suggested_assignee_id;
+  const createMutation = useMutation({
+    mutationFn: async () => {
+      if (!currentOrg) throw new Error("No org");
+      const insertData: any = {
+        organization_id: currentOrg.id, title: form.title, description: form.description || null,
+        status: form.status, priority: form.priority, due_date: form.due_date || null,
+      };
+      if (recommendation) {
+        insertData.ai_recommended = true;
+        insertData.ai_confidence = recommendation.confidence;
+        insertData.estimated_hours = recommendation.estimated_hours;
+        insertData.category = recommendation.category;
+        if (recommendation.suggested_assignee_id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(recommendation.suggested_assignee_id)) {
+          insertData.assigned_to = recommendation.suggested_assignee_id;
+        }
       }
-    }
-
-    const { error } = await supabase.from("tasks").insert(insertData);
-    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-    else {
+      const { error } = await supabase.from("tasks").insert(insertData);
+      if (error) throw error;
+    },
+    onSuccess: () => {
       setDialogOpen(false);
       setForm({ title: "", description: "", status: "todo", priority: "medium", due_date: "" });
       dismiss();
-      fetchTasks();
-    }
-    setSubmitting(false);
-  };
+      queryClient.invalidateQueries({ queryKey: ["tasks", currentOrg?.id] });
+    },
+    onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+  });
 
-  const updateStatus = async (id: string, status: TaskStatus) => {
-    await supabase.from("tasks").update({ status }).eq("id", id);
-    fetchTasks();
-  };
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: TaskStatus }) => {
+      await supabase.from("tasks").update({ status }).eq("id", id);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tasks", currentOrg?.id] }),
+  });
 
   const onDragEnd = useCallback(async (result: DropResult) => {
     const { draggableId, destination } = result;
     if (!destination) return;
     const newStatus = destination.droppableId as TaskStatus;
-    setTasks(prev => prev.map(t => t.id === draggableId ? { ...t, status: newStatus } : t));
+    setLocalTasks(prev => prev.map(t => t.id === draggableId ? { ...t, status: newStatus } : t));
     await supabase.from("tasks").update({ status: newStatus }).eq("id", draggableId);
-    fetchTasks();
-  }, [fetchTasks]);
+    queryClient.invalidateQueries({ queryKey: ["tasks", currentOrg?.id] });
+  }, [currentOrg, queryClient]);
 
   const openTaskDetail = (task: any) => {
     setSelectedTask(task);
@@ -165,10 +177,9 @@ export default function Tasks() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Tasks</h1>
-            <p className="text-muted-foreground">Manage your team's tasks</p>
+            <p className="text-muted-foreground">Manage your team's tasks ({totalCount} total)</p>
           </div>
           <div className="flex items-center gap-3">
-            {/* Online users indicator */}
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Users className="h-3.5 w-3.5" />
               <span>{onlineCount} online</span>
@@ -185,7 +196,7 @@ export default function Tasks() {
               </DialogTrigger>
               <DialogContent className="max-w-lg">
                 <DialogHeader><DialogTitle>Create Task</DialogTitle></DialogHeader>
-                <form onSubmit={handleCreate} className="space-y-4">
+                <form onSubmit={(e) => { e.preventDefault(); createMutation.mutate(); }} className="space-y-4">
                   <div className="space-y-2">
                     <Label>Title</Label>
                     <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
@@ -212,7 +223,6 @@ export default function Tasks() {
                     </div>
                   </div>
 
-                  {/* AI Recommendation Card */}
                   <AIRecommendationCard
                     recommendation={recommendation}
                     loading={aiLoading}
@@ -220,8 +230,8 @@ export default function Tasks() {
                     onDismiss={dismiss}
                   />
 
-                  <Button type="submit" className="w-full" disabled={submitting}>
-                    {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  <Button type="submit" className="w-full" disabled={createMutation.isPending}>
+                    {createMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                     Create Task
                   </Button>
                 </form>
@@ -230,7 +240,7 @@ export default function Tasks() {
           </div>
         </div>
 
-        {loading ? (
+        {isLoading ? (
           <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
         ) : (
           <DragDropContext onDragEnd={onDragEnd}>
@@ -241,7 +251,7 @@ export default function Tasks() {
                     <CardTitle className="text-sm font-medium flex items-center gap-2">
                       {statusIcons[col.status]}
                       {col.label}
-                      <Badge variant="secondary" className="ml-auto">{tasks.filter(t => t.status === col.status).length}</Badge>
+                      <Badge variant="secondary" className="ml-auto">{localTasks.filter(t => t.status === col.status).length}</Badge>
                     </CardTitle>
                   </CardHeader>
                   <Droppable droppableId={col.status}>
@@ -251,7 +261,7 @@ export default function Tasks() {
                         {...provided.droppableProps}
                         className={`space-y-2 min-h-[80px] transition-colors ${snapshot.isDraggingOver ? "bg-primary/5 rounded-b-lg" : ""}`}
                       >
-                        {tasks.filter(t => t.status === col.status).map((task, index) => {
+                        {localTasks.filter(t => t.status === col.status).map((task, index) => {
                           const taskOnlineUsers = onlineUsers.filter(u => u.current_task_id === task.id);
                           return (
                             <Draggable key={task.id} draggableId={task.id} index={index}>
@@ -309,7 +319,18 @@ export default function Tasks() {
           </DragDropContext>
         )}
 
-        {/* Activity Feed Section */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}>
+              <ChevronLeft className="h-4 w-4" /> Prev
+            </Button>
+            <span className="text-sm text-muted-foreground">Page {page + 1} of {totalPages}</span>
+            <Button variant="outline" size="sm" onClick={() => setPage(p => p + 1)} disabled={page >= totalPages - 1}>
+              Next <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -323,7 +344,6 @@ export default function Tasks() {
         </Card>
       </div>
 
-      {/* Task Detail Sheet */}
       <Sheet open={sheetOpen} onOpenChange={(open) => { if (!open) closeTaskDetail(); }}>
         <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
           {selectedTask && (
@@ -356,7 +376,7 @@ export default function Tasks() {
                   <Select
                     value={selectedTask.status}
                     onValueChange={(v) => {
-                      updateStatus(selectedTask.id, v as TaskStatus);
+                      updateStatusMutation.mutate({ id: selectedTask.id, status: v as TaskStatus });
                       setSelectedTask({ ...selectedTask, status: v });
                     }}
                   >
@@ -395,7 +415,6 @@ export default function Tasks() {
                 )}
               </div>
 
-              {/* Comments */}
               <Tabs defaultValue="comments">
                 <TabsList className="w-full">
                   <TabsTrigger value="comments" className="flex-1">
