@@ -13,13 +13,13 @@ export function useUserPreferences() {
 
   const { data: preferences, isLoading } = useQuery({
     queryKey: ["user_preferences", user?.id],
-    queryFn: async () => {
+    queryFn: async (): Promise<UserPreferences | null> => {
       if (!user) return null;
       const { data } = await supabase
         .from("user_preferences" as any)
         .select("*")
         .eq("user_id", user.id)
-        .maybeSingle();
+        .maybeSingle() as any;
       return data as UserPreferences | null;
     },
     enabled: !!user,
