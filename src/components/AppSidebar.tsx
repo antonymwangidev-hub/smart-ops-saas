@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, Users, ShoppingCart, CheckSquare, Zap, BarChart3, Settings, Bell, LogOut, ChevronDown, FileText, Shield
+  LayoutDashboard, Users, ShoppingCart, CheckSquare, Zap, BarChart3, Settings, Bell, LogOut, ChevronDown, FileText, Shield, Package
 } from "lucide-react";
 import { usePlatformAdmin } from "@/hooks/usePlatformAdmin";
 import { NavLink } from "@/components/NavLink";
@@ -18,6 +18,7 @@ const navItems = [
   { title: "Orders", url: "/orders", icon: ShoppingCart },
   { title: "Tasks", url: "/tasks", icon: CheckSquare },
   { title: "Automations", url: "/automations", icon: Zap },
+  { title: "Products", url: "/products", icon: Package },
   { title: "Documents", url: "/documents", icon: FileText },
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
 ];

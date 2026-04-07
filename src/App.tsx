@@ -15,6 +15,7 @@ import Customers from "./pages/Customers";
 import Orders from "./pages/Orders";
 import Tasks from "./pages/Tasks";
 import Automations from "./pages/Automations";
+import Products from "./pages/Products";
 import Analytics from "./pages/Analytics";
 import Notifications from "./pages/Notifications";
 import AppSettings from "./pages/AppSettings";
@@ -44,6 +45,7 @@ const App = () => (
               <Route path="/orders" element={<PrivateRoute><Orders /></PrivateRoute>} />
               <Route path="/tasks" element={<PrivateRoute><Tasks /></PrivateRoute>} />
               <Route path="/automations" element={<PrivateRoute><Automations /></PrivateRoute>} />
+              <Route path="/products" element={<PrivateRoute><Products /></PrivateRoute>} />
               <Route path="/documents" element={<PrivateRoute><Documents /></PrivateRoute>} />
               <Route path="/analytics" element={<PrivateRoute><Analytics /></PrivateRoute>} />
               <Route path="/notifications" element={<PrivateRoute><Notifications /></PrivateRoute>} />
