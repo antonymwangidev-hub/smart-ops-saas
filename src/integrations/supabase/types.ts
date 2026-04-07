@@ -395,6 +395,62 @@ export type Database = {
         }
         Relationships: []
       }
+      products: {
+        Row: {
+          category: string | null
+          cost_price: number | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          low_stock_threshold: number
+          name: string
+          organization_id: string
+          price: number
+          sku: string | null
+          stock_quantity: number
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          cost_price?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          low_stock_threshold?: number
+          name: string
+          organization_id: string
+          price?: number
+          sku?: string | null
+          stock_quantity?: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          cost_price?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          low_stock_threshold?: number
+          name?: string
+          organization_id?: string
+          price?: number
+          sku?: string | null
+          stock_quantity?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
