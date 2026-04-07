@@ -35,7 +35,7 @@ const emptyForm: ProductForm = {
 export default function Products() {
   const { currentOrg } = useOrg();
   const { toast } = useToast();
-  const { format } = useCurrency();
+  const { formatAmount } = useCurrency();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
