@@ -233,7 +233,7 @@ export default function Products() {
                       </TableCell>
                       <TableCell className="text-muted-foreground font-mono text-sm">{product.sku || "—"}</TableCell>
                       <TableCell>{product.category ? <Badge variant="outline">{product.category}</Badge> : "—"}</TableCell>
-                      <TableCell className="text-right">{format(product.price)}</TableCell>
+                      <TableCell className="text-right"><TableCell className="text-right">{formatAmount(product.price)}</TableCell></TableCell>
                       <TableCell className="text-right">
                         <span className={isLow && product.is_active ? "text-destructive font-medium" : ""}>
                           {product.stock_quantity}
