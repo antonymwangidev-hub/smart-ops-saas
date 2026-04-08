@@ -92,7 +92,10 @@ export default function Auth() {
                 </form>
                 <div className="mt-4">
                   <Separator className="my-4" />
-                  <Button type="button" variant="outline" className="w-full" onClick={() => lovable.auth.signInWithOAuth("google")}>
+                  <Button type="button" variant="outline" className="w-full" onClick={async () => {
+                    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
+                    if (result.error) toast({ title: "Google sign-in failed", description: String(result.error), variant: "destructive" });
+                  }}>
                     Sign in with Google
                   </Button>
                 </div>
@@ -116,6 +119,15 @@ export default function Auth() {
                     Create Account
                   </Button>
                 </form>
+                <div className="mt-4">
+                  <Separator className="my-4" />
+                  <Button type="button" variant="outline" className="w-full" onClick={async () => {
+                    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
+                    if (result.error) toast({ title: "Google sign-up failed", description: String(result.error), variant: "destructive" });
+                  }}>
+                    Sign up with Google
+                  </Button>
+                </div>
               </TabsContent>
             </Tabs>
           </CardContent>
