@@ -5,16 +5,26 @@ import { ThemeToggle } from "./ThemeToggle";
 import { CommandPalette } from "./CommandPalette";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrg } from "@/contexts/OrgContext";
-import { Navigate } from "react-router-dom";
-import { Loader2, Search, Users } from "lucide-react";
+import { Navigate, useLocation, Link } from "react-router-dom";
+import { Loader2, Search, Users, ShoppingCart, Calculator, CreditCard, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PresenceIndicator } from "@/components/PresenceIndicator";
 import { usePresence } from "@/hooks/usePresence";
+import { useIsMobile } from "@/hooks/use-mobile";
+
+const mobileNavItems = [
+  { label: "Sell", href: "/pos", icon: ShoppingCart },
+  { label: "Today", href: "/daily-summary", icon: Calculator },
+  { label: "Deni", href: "/credit-sales", icon: CreditCard },
+  { label: "Stock", href: "/products", icon: Package },
+];
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const { user, loading: authLoading } = useAuth();
   const { currentOrg, loading: orgLoading } = useOrg();
   const { onlineUsers, onlineCount } = usePresence();
+  const isMobile = useIsMobile();
+  const location = useLocation();
 
   if (authLoading || orgLoading) {
     return (
@@ -63,9 +73,32 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </div>
             <ThemeToggle />
           </header>
-          <main className="flex-1 p-6 overflow-auto animate-fade-in">
+          <main className={`flex-1 p-4 sm:p-6 overflow-auto animate-fade-in ${isMobile ? "pb-20" : ""}`}>
             {children}
           </main>
+
+          {/* Mobile bottom navigation */}
+          {isMobile && (
+            <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50 safe-area-bottom">
+              <div className="flex items-center justify-around h-16">
+                {mobileNavItems.map((item) => {
+                  const active = location.pathname === item.href;
+                  return (
+                    <Link
+                      key={item.href}
+                      to={item.href}
+                      className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-colors ${
+                        active ? "text-primary" : "text-muted-foreground"
+                      }`}
+                    >
+                      <item.icon className="h-5 w-5" />
+                      <span className="text-[10px] font-medium">{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </nav>
+          )}
         </div>
       </div>
       <CommandPalette />
