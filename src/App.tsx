@@ -16,6 +16,7 @@ import Orders from "./pages/Orders";
 import Tasks from "./pages/Tasks";
 import Automations from "./pages/Automations";
 import Products from "./pages/Products";
+import ResetPassword from "./pages/ResetPassword";
 import Analytics from "./pages/Analytics";
 import Notifications from "./pages/Notifications";
 import AppSettings from "./pages/AppSettings";
@@ -40,6 +41,7 @@ const App = () => (
               <Route path="/" element={<Landing />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/onboarding" element={<Onboarding />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
               <Route path="/customers" element={<PrivateRoute><Customers /></PrivateRoute>} />
               <Route path="/orders" element={<PrivateRoute><Orders /></PrivateRoute>} />
