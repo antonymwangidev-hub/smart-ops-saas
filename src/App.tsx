@@ -16,6 +16,9 @@ import Orders from "./pages/Orders";
 import Tasks from "./pages/Tasks";
 import Automations from "./pages/Automations";
 import Products from "./pages/Products";
+import POS from "./pages/POS";
+import DailySummary from "./pages/DailySummary";
+import CreditSales from "./pages/CreditSales";
 import ResetPassword from "./pages/ResetPassword";
 import Analytics from "./pages/Analytics";
 import Notifications from "./pages/Notifications";
@@ -42,6 +45,9 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/pos" element={<PrivateRoute><POS /></PrivateRoute>} />
+              <Route path="/daily-summary" element={<PrivateRoute><DailySummary /></PrivateRoute>} />
+              <Route path="/credit-sales" element={<PrivateRoute><CreditSales /></PrivateRoute>} />
               <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
               <Route path="/customers" element={<PrivateRoute><Customers /></PrivateRoute>} />
               <Route path="/orders" element={<PrivateRoute><Orders /></PrivateRoute>} />
