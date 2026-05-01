@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, Users, ShoppingCart, CheckSquare, Zap, BarChart3, Settings, Bell, LogOut, ChevronDown, FileText, Shield, Package
+  LayoutDashboard, Users, ShoppingCart, CheckSquare, Zap, BarChart3, Settings, Bell, LogOut, ChevronDown, FileText, Shield, Package, Receipt, CreditCard, Calculator
 } from "lucide-react";
 import { usePlatformAdmin } from "@/hooks/usePlatformAdmin";
 import { NavLink } from "@/components/NavLink";
@@ -12,13 +12,19 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useOrg } from "@/contexts/OrgContext";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
-const navItems = [
+const posItems = [
+  { title: "Sell", url: "/pos", icon: ShoppingCart },
+  { title: "Today's Sales", url: "/daily-summary", icon: Calculator },
+  { title: "Credit (Deni)", url: "/credit-sales", icon: CreditCard },
+  { title: "Products", url: "/products", icon: Package },
+];
+
+const manageItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Customers", url: "/customers", icon: Users },
-  { title: "Orders", url: "/orders", icon: ShoppingCart },
+  { title: "Orders", url: "/orders", icon: Receipt },
   { title: "Tasks", url: "/tasks", icon: CheckSquare },
   { title: "Automations", url: "/automations", icon: Zap },
-  { title: "Products", url: "/products", icon: Package },
   { title: "Documents", url: "/documents", icon: FileText },
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
 ];
@@ -35,6 +41,26 @@ export function AppSidebar() {
   const { currentOrg, organizations, setCurrentOrg } = useOrg();
   const { isPlatformAdmin } = usePlatformAdmin();
   const location = useLocation();
+
+  const renderNavItems = (items: typeof posItems) =>
+    items.map((item) => {
+      const active = location.pathname === item.url;
+      return (
+        <SidebarMenuItem key={item.title}>
+          <SidebarMenuButton asChild isActive={active}>
+            <NavLink
+              to={item.url}
+              end
+              activeClassName="bg-primary/10 text-primary font-medium border-l-2 border-primary"
+              className="rounded-lg transition-all duration-200 hover:bg-accent"
+            >
+              <item.icon className={`h-4 w-4 ${active ? "text-primary" : ""}`} />
+              {!collapsed && <span>{item.title}</span>}
+            </NavLink>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      );
+    });
 
   return (
     <Sidebar collapsible="icon">
@@ -72,28 +98,16 @@ export function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground/70 px-2">Main</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground/70 px-2">POS</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
-              {navItems.map((item) => {
-                const active = location.pathname === item.url;
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={active}>
-                      <NavLink
-                        to={item.url}
-                        end
-                        activeClassName="bg-primary/10 text-primary font-medium border-l-2 border-primary"
-                        className="rounded-lg transition-all duration-200 hover:bg-accent"
-                      >
-                        <item.icon className={`h-4 w-4 ${active ? "text-primary" : ""}`} />
-                        {!collapsed && <span>{item.title}</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
+            <SidebarMenu>{renderNavItems(posItems)}</SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground/70 px-2">Manage</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>{renderNavItems(manageItems)}</SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
@@ -123,26 +137,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground/70 px-2">System</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
-              {secondaryItems.map((item) => {
-                const active = location.pathname === item.url;
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={active}>
-                      <NavLink
-                        to={item.url}
-                        end
-                        activeClassName="bg-primary/10 text-primary font-medium border-l-2 border-primary"
-                        className="rounded-lg transition-all duration-200 hover:bg-accent"
-                      >
-                        <item.icon className={`h-4 w-4 ${active ? "text-primary" : ""}`} />
-                        {!collapsed && <span>{item.title}</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
+            <SidebarMenu>{renderNavItems(secondaryItems)}</SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
