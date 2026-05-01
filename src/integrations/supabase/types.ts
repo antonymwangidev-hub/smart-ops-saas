@@ -93,6 +93,56 @@ export type Database = {
           },
         ]
       }
+      credit_sales: {
+        Row: {
+          amount_paid: number
+          created_at: string
+          customer_name: string
+          id: string
+          is_settled: boolean
+          notes: string | null
+          organization_id: string
+          phone: string | null
+          sale_id: string | null
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          amount_paid?: number
+          created_at?: string
+          customer_name: string
+          id?: string
+          is_settled?: boolean
+          notes?: string | null
+          organization_id: string
+          phone?: string | null
+          sale_id?: string | null
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          amount_paid?: number
+          created_at?: string
+          customer_name?: string
+          id?: string
+          is_settled?: boolean
+          notes?: string | null
+          organization_id?: string
+          phone?: string | null
+          sale_id?: string | null
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_sales_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           created_at: string
@@ -527,6 +577,89 @@ export type Database = {
           id?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      sale_items: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          product_id: string
+          product_name: string
+          quantity: number
+          sale_id: string
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          product_id: string
+          product_name: string
+          quantity?: number
+          sale_id: string
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          product_id?: string
+          product_name?: string
+          quantity?: number
+          sale_id?: string
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_items_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales: {
+        Row: {
+          cash_received: number | null
+          change_given: number | null
+          created_at: string
+          created_by: string | null
+          customer_name: string | null
+          id: string
+          is_credit: boolean
+          notes: string | null
+          organization_id: string
+          payment_method: string
+          total_amount: number
+        }
+        Insert: {
+          cash_received?: number | null
+          change_given?: number | null
+          created_at?: string
+          created_by?: string | null
+          customer_name?: string | null
+          id?: string
+          is_credit?: boolean
+          notes?: string | null
+          organization_id: string
+          payment_method?: string
+          total_amount?: number
+        }
+        Update: {
+          cash_received?: number | null
+          change_given?: number | null
+          created_at?: string
+          created_by?: string | null
+          customer_name?: string | null
+          id?: string
+          is_credit?: boolean
+          notes?: string | null
+          organization_id?: string
+          payment_method?: string
+          total_amount?: number
         }
         Relationships: []
       }
