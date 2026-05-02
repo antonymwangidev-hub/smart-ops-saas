@@ -5,6 +5,7 @@ import { ThemeToggle } from "./ThemeToggle";
 import { CommandPalette } from "./CommandPalette";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrg } from "@/contexts/OrgContext";
+import { useOrgRole } from "@/hooks/useOrgRole";
 import { Navigate, useLocation, Link } from "react-router-dom";
 import { Loader2, Search, Users, ShoppingCart, Calculator, CreditCard, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,19 +13,25 @@ import { PresenceIndicator } from "@/components/PresenceIndicator";
 import { usePresence } from "@/hooks/usePresence";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-const mobileNavItems = [
-  { label: "Sell", href: "/pos", icon: ShoppingCart },
-  { label: "Today", href: "/daily-summary", icon: Calculator },
-  { label: "Deni", href: "/credit-sales", icon: CreditCard },
-  { label: "Stock", href: "/products", icon: Package },
+const allMobileNavItems = [
+  { label: "Sell", href: "/pos", icon: ShoppingCart, minRole: 1 },
+  { label: "Today", href: "/daily-summary", icon: Calculator, minRole: 1 },
+  { label: "Deni", href: "/credit-sales", icon: CreditCard, minRole: 2 },
+  { label: "Stock", href: "/products", icon: Package, minRole: 2 },
 ];
+
+const ROLE_LEVEL: Record<string, number> = { admin: 3, staff: 2, attendant: 1 };
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const { user, loading: authLoading } = useAuth();
   const { currentOrg, loading: orgLoading } = useOrg();
   const { onlineUsers, onlineCount } = usePresence();
+  const { role } = useOrgRole();
   const isMobile = useIsMobile();
   const location = useLocation();
+
+  const userLevel = ROLE_LEVEL[role] || 1;
+  const mobileNavItems = allMobileNavItems.filter(i => userLevel >= i.minRole);
 
   if (authLoading || orgLoading) {
     return (
@@ -77,7 +84,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
             {children}
           </main>
 
-          {/* Mobile bottom navigation */}
           {isMobile && (
             <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50 safe-area-bottom">
               <div className="flex items-center justify-around h-16">
