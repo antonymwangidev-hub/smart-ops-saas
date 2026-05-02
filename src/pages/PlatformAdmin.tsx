@@ -80,6 +80,8 @@ export default function PlatformAdmin() {
     open: false, title: "", description: "", onConfirm: () => {},
   });
   const [copied, setCopied] = useState(false);
+  const [addOwnerDialog, setAddOwnerDialog] = useState<{ open: boolean; orgId: string; orgName: string }>({ open: false, orgId: "", orgName: "" });
+  const [ownerEmail, setOwnerEmail] = useState("");
 
   useEffect(() => {
     if (!isPlatformAdmin || adminLoading) return;
