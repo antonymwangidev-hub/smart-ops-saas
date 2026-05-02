@@ -671,6 +671,34 @@ export default function PlatformAdmin() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Add Owner Dialog */}
+      <Dialog open={addOwnerDialog.open} onOpenChange={(open) => setAddOwnerDialog(prev => ({ ...prev, open }))}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Business Owner</DialogTitle>
+            <DialogDescription>
+              Add an owner to <strong>{addOwnerDialog.orgName}</strong>. The user must already have a SmartOps account.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label>Email address</Label>
+            <Input
+              type="email"
+              placeholder="owner@example.com"
+              value={ownerEmail}
+              onChange={(e) => setOwnerEmail(e.target.value)}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddOwnerDialog({ open: false, orgId: "", orgName: "" })}>Cancel</Button>
+            <Button onClick={handleAddOwner} disabled={actionLoading === "add-owner" || !ownerEmail.trim()}>
+              {actionLoading === "add-owner" ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Add Owner
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
