@@ -124,7 +124,7 @@ export default function StaffManagement() {
     try {
       const { error } = await supabase
         .from("organization_members")
-        .update({ role: editRole })
+        .update({ role: editRole as "admin" | "staff" | "attendant" })
         .eq("id", editingMember.id)
         .eq("organization_id", currentOrg.id);
 
