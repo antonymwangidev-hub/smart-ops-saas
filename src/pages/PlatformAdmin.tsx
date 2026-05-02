@@ -298,7 +298,28 @@ export default function PlatformAdmin() {
     }
   };
 
-  if (authLoading || adminLoading) {
+  const handleAddOwner = async () => {
+    if (!ownerEmail.trim() || !addOwnerDialog.orgId) return;
+    setActionLoading("add-owner");
+    try {
+      const res = await invokeAdminAction({
+        action: "add_owner_to_org",
+        email: ownerEmail.trim(),
+        org_id: addOwnerDialog.orgId,
+      });
+      if (res?.error) throw new Error(res.error);
+      toast.success(`Owner added to ${addOwnerDialog.orgName}`);
+      setOwnerEmail("");
+      setAddOwnerDialog({ open: false, orgId: "", orgName: "" });
+      fetchAllData();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to add owner");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+
     return (
       <AppLayout>
         <div className="flex min-h-[60vh] items-center justify-center">
