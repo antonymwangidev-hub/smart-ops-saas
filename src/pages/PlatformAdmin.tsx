@@ -496,7 +496,14 @@ export default function PlatformAdmin() {
                             <TableCell className="text-muted-foreground text-sm">
                               {new Date(org.created_at).toLocaleDateString()}
                             </TableCell>
-                            <TableCell className="text-right">
+                            <TableCell className="text-right space-x-1">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setAddOwnerDialog({ open: true, orgId: org.id, orgName: org.name })}
+                              >
+                                <UserPlus className="h-3.5 w-3.5 mr-1" /> Add Owner
+                              </Button>
                               <Button
                                 variant={org.is_active ? "destructive" : "default"}
                                 size="sm"
