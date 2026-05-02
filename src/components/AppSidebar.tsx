@@ -1,7 +1,8 @@
 import {
-  LayoutDashboard, Users, ShoppingCart, CheckSquare, Zap, BarChart3, Settings, Bell, LogOut, ChevronDown, FileText, Shield, Package, Receipt, CreditCard, Calculator
+  LayoutDashboard, Users, ShoppingCart, CheckSquare, Zap, BarChart3, Settings, Bell, LogOut, ChevronDown, FileText, Shield, Package, Receipt, CreditCard, Calculator, UserCog
 } from "lucide-react";
 import { usePlatformAdmin } from "@/hooks/usePlatformAdmin";
+import { useOrgRole } from "@/hooks/useOrgRole";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import {
@@ -13,26 +14,29 @@ import { useOrg } from "@/contexts/OrgContext";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const posItems = [
-  { title: "Sell", url: "/pos", icon: ShoppingCart },
-  { title: "Today's Sales", url: "/daily-summary", icon: Calculator },
-  { title: "Credit (Deni)", url: "/credit-sales", icon: CreditCard },
-  { title: "Products", url: "/products", icon: Package },
+  { title: "Sell", url: "/pos", icon: ShoppingCart, minRole: "attendant" as const },
+  { title: "Today's Sales", url: "/daily-summary", icon: Calculator, minRole: "attendant" as const },
+  { title: "Credit (Deni)", url: "/credit-sales", icon: CreditCard, minRole: "staff" as const },
+  { title: "Products", url: "/products", icon: Package, minRole: "staff" as const },
 ];
 
 const manageItems = [
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Customers", url: "/customers", icon: Users },
-  { title: "Orders", url: "/orders", icon: Receipt },
-  { title: "Tasks", url: "/tasks", icon: CheckSquare },
-  { title: "Automations", url: "/automations", icon: Zap },
-  { title: "Documents", url: "/documents", icon: FileText },
-  { title: "Analytics", url: "/analytics", icon: BarChart3 },
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, minRole: "staff" as const },
+  { title: "Customers", url: "/customers", icon: Users, minRole: "staff" as const },
+  { title: "Orders", url: "/orders", icon: Receipt, minRole: "staff" as const },
+  { title: "Tasks", url: "/tasks", icon: CheckSquare, minRole: "staff" as const },
+  { title: "Automations", url: "/automations", icon: Zap, minRole: "staff" as const },
+  { title: "Documents", url: "/documents", icon: FileText, minRole: "staff" as const },
+  { title: "Analytics", url: "/analytics", icon: BarChart3, minRole: "staff" as const },
 ];
 
 const secondaryItems = [
-  { title: "Notifications", url: "/notifications", icon: Bell },
-  { title: "Settings", url: "/settings", icon: Settings },
+  { title: "Notifications", url: "/notifications", icon: Bell, minRole: "staff" as const },
+  { title: "Settings", url: "/settings", icon: Settings, minRole: "staff" as const },
 ];
+
+const ROLE_LEVEL = { admin: 3, staff: 2, attendant: 1 } as const;
+type RoleName = keyof typeof ROLE_LEVEL;
 
 export function AppSidebar() {
   const { state } = useSidebar();
@@ -40,7 +44,17 @@ export function AppSidebar() {
   const { signOut, user } = useAuth();
   const { currentOrg, organizations, setCurrentOrg } = useOrg();
   const { isPlatformAdmin } = usePlatformAdmin();
+  const { role } = useOrgRole();
   const location = useLocation();
+
+  const userLevel = ROLE_LEVEL[role as RoleName] || 1;
+
+  const filterByRole = <T extends { minRole: RoleName }>(items: T[]) =>
+    items.filter((item) => userLevel >= ROLE_LEVEL[item.minRole]);
+
+  const visiblePosItems = filterByRole(posItems);
+  const visibleManageItems = filterByRole(manageItems);
+  const visibleSecondaryItems = filterByRole(secondaryItems);
 
   const renderNavItems = (items: typeof posItems) =>
     items.map((item) => {
@@ -100,16 +114,42 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground/70 px-2">POS</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>{renderNavItems(posItems)}</SidebarMenu>
+            <SidebarMenu>{renderNavItems(visiblePosItems)}</SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground/70 px-2">Manage</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>{renderNavItems(manageItems)}</SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {visibleManageItems.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground/70 px-2">Manage</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>{renderNavItems(visibleManageItems)}</SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {/* Owner-only: Staff Management */}
+        {role === "admin" && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground/70 px-2">Business</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={location.pathname === "/staff"}>
+                    <NavLink
+                      to="/staff"
+                      end
+                      activeClassName="bg-primary/10 text-primary font-medium border-l-2 border-primary"
+                      className="rounded-lg transition-all duration-200 hover:bg-accent"
+                    >
+                      <UserCog className={`h-4 w-4 ${location.pathname === "/staff" ? "text-primary" : ""}`} />
+                      {!collapsed && <span>Staff Management</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
         {isPlatformAdmin && (
           <SidebarGroup>
@@ -134,12 +174,14 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
 
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground/70 px-2">System</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>{renderNavItems(secondaryItems)}</SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {visibleSecondaryItems.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground/70 px-2">System</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>{renderNavItems(visibleSecondaryItems)}</SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="border-t border-border/50 p-2">

@@ -12,8 +12,10 @@ import { AppLayout } from "@/components/AppLayout";
 import {
   Shield, Users, Building2, BarChart3, Loader2, UserCheck, ShoppingCart,
   CheckSquare, TrendingUp, Activity, KeyRound, Power, PowerOff, Copy, Check,
-  Trash2, UserMinus
+  Trash2, UserMinus, UserPlus
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { useTheme } from "@/components/ThemeProvider";
 import { toast } from "sonner";
@@ -78,6 +80,8 @@ export default function PlatformAdmin() {
     open: false, title: "", description: "", onConfirm: () => {},
   });
   const [copied, setCopied] = useState(false);
+  const [addOwnerDialog, setAddOwnerDialog] = useState<{ open: boolean; orgId: string; orgName: string }>({ open: false, orgId: "", orgName: "" });
+  const [ownerEmail, setOwnerEmail] = useState("");
 
   useEffect(() => {
     if (!isPlatformAdmin || adminLoading) return;
@@ -294,6 +298,27 @@ export default function PlatformAdmin() {
     }
   };
 
+  const handleAddOwner = async () => {
+    if (!ownerEmail.trim() || !addOwnerDialog.orgId) return;
+    setActionLoading("add-owner");
+    try {
+      const res = await invokeAdminAction({
+        action: "add_owner_to_org",
+        email: ownerEmail.trim(),
+        org_id: addOwnerDialog.orgId,
+      });
+      if (res?.error) throw new Error(res.error);
+      toast.success(`Owner added to ${addOwnerDialog.orgName}`);
+      setOwnerEmail("");
+      setAddOwnerDialog({ open: false, orgId: "", orgName: "" });
+      fetchAllData();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to add owner");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   if (authLoading || adminLoading) {
     return (
       <AppLayout>
@@ -471,7 +496,14 @@ export default function PlatformAdmin() {
                             <TableCell className="text-muted-foreground text-sm">
                               {new Date(org.created_at).toLocaleDateString()}
                             </TableCell>
-                            <TableCell className="text-right">
+                            <TableCell className="text-right space-x-1">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setAddOwnerDialog({ open: true, orgId: org.id, orgName: org.name })}
+                              >
+                                <UserPlus className="h-3.5 w-3.5 mr-1" /> Add Owner
+                              </Button>
                               <Button
                                 variant={org.is_active ? "destructive" : "default"}
                                 size="sm"
@@ -636,6 +668,34 @@ export default function PlatformAdmin() {
           </div>
           <DialogFooter>
             <Button onClick={() => setResetDialog({ open: false })}>Done</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Owner Dialog */}
+      <Dialog open={addOwnerDialog.open} onOpenChange={(open) => setAddOwnerDialog(prev => ({ ...prev, open }))}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Business Owner</DialogTitle>
+            <DialogDescription>
+              Add an owner to <strong>{addOwnerDialog.orgName}</strong>. The user must already have a SmartOps account.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label>Email address</Label>
+            <Input
+              type="email"
+              placeholder="owner@example.com"
+              value={ownerEmail}
+              onChange={(e) => setOwnerEmail(e.target.value)}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddOwnerDialog({ open: false, orgId: "", orgName: "" })}>Cancel</Button>
+            <Button onClick={handleAddOwner} disabled={actionLoading === "add-owner" || !ownerEmail.trim()}>
+              {actionLoading === "add-owner" ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Add Owner
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

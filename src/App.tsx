@@ -8,6 +8,7 @@ import { OrgProvider } from "@/contexts/OrgContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { PrivateRoute } from "@/components/PrivateRoute";
+import { RoleRoute } from "@/components/RoleRoute";
 import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
@@ -19,6 +20,7 @@ import Products from "./pages/Products";
 import POS from "./pages/POS";
 import DailySummary from "./pages/DailySummary";
 import CreditSales from "./pages/CreditSales";
+import StaffManagement from "./pages/StaffManagement";
 import ResetPassword from "./pages/ResetPassword";
 import Analytics from "./pages/Analytics";
 import Notifications from "./pages/Notifications";
@@ -45,19 +47,23 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              {/* POS — all roles */}
               <Route path="/pos" element={<PrivateRoute><POS /></PrivateRoute>} />
               <Route path="/daily-summary" element={<PrivateRoute><DailySummary /></PrivateRoute>} />
-              <Route path="/credit-sales" element={<PrivateRoute><CreditSales /></PrivateRoute>} />
-              <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-              <Route path="/customers" element={<PrivateRoute><Customers /></PrivateRoute>} />
-              <Route path="/orders" element={<PrivateRoute><Orders /></PrivateRoute>} />
-              <Route path="/tasks" element={<PrivateRoute><Tasks /></PrivateRoute>} />
-              <Route path="/automations" element={<PrivateRoute><Automations /></PrivateRoute>} />
-              <Route path="/products" element={<PrivateRoute><Products /></PrivateRoute>} />
-              <Route path="/documents" element={<PrivateRoute><Documents /></PrivateRoute>} />
-              <Route path="/analytics" element={<PrivateRoute><Analytics /></PrivateRoute>} />
-              <Route path="/notifications" element={<PrivateRoute><Notifications /></PrivateRoute>} />
-              <Route path="/settings" element={<PrivateRoute><AppSettings /></PrivateRoute>} />
+              {/* Staff+ routes */}
+              <Route path="/credit-sales" element={<PrivateRoute><RoleRoute requiredRole="staff"><CreditSales /></RoleRoute></PrivateRoute>} />
+              <Route path="/products" element={<PrivateRoute><RoleRoute requiredRole="staff"><Products /></RoleRoute></PrivateRoute>} />
+              <Route path="/dashboard" element={<PrivateRoute><RoleRoute requiredRole="staff"><Dashboard /></RoleRoute></PrivateRoute>} />
+              <Route path="/customers" element={<PrivateRoute><RoleRoute requiredRole="staff"><Customers /></RoleRoute></PrivateRoute>} />
+              <Route path="/orders" element={<PrivateRoute><RoleRoute requiredRole="staff"><Orders /></RoleRoute></PrivateRoute>} />
+              <Route path="/tasks" element={<PrivateRoute><RoleRoute requiredRole="staff"><Tasks /></RoleRoute></PrivateRoute>} />
+              <Route path="/automations" element={<PrivateRoute><RoleRoute requiredRole="staff"><Automations /></RoleRoute></PrivateRoute>} />
+              <Route path="/documents" element={<PrivateRoute><RoleRoute requiredRole="staff"><Documents /></RoleRoute></PrivateRoute>} />
+              <Route path="/analytics" element={<PrivateRoute><RoleRoute requiredRole="staff"><Analytics /></RoleRoute></PrivateRoute>} />
+              <Route path="/notifications" element={<PrivateRoute><RoleRoute requiredRole="staff"><Notifications /></RoleRoute></PrivateRoute>} />
+              <Route path="/settings" element={<PrivateRoute><RoleRoute requiredRole="staff"><AppSettings /></RoleRoute></PrivateRoute>} />
+              {/* Admin-only routes */}
+              <Route path="/staff" element={<PrivateRoute><RoleRoute requiredRole="admin"><StaffManagement /></RoleRoute></PrivateRoute>} />
               <Route path="/admin" element={<PrivateRoute><PlatformAdmin /></PrivateRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
