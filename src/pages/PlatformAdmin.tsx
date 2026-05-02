@@ -319,7 +319,7 @@ export default function PlatformAdmin() {
     }
   };
 
-
+  if (authLoading || adminLoading) {
     return (
       <AppLayout>
         <div className="flex min-h-[60vh] items-center justify-center">
