@@ -12,8 +12,10 @@ import { AppLayout } from "@/components/AppLayout";
 import {
   Shield, Users, Building2, BarChart3, Loader2, UserCheck, ShoppingCart,
   CheckSquare, TrendingUp, Activity, KeyRound, Power, PowerOff, Copy, Check,
-  Trash2, UserMinus
+  Trash2, UserMinus, UserPlus
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { useTheme } from "@/components/ThemeProvider";
 import { toast } from "sonner";
