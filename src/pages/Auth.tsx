@@ -19,6 +19,45 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+
+  const normalizePhone = (raw: string) => {
+    const trimmed = raw.trim().replace(/\s+/g, "");
+    if (trimmed.startsWith("+")) return trimmed;
+    if (trimmed.startsWith("0")) return "+254" + trimmed.slice(1);
+    if (trimmed.startsWith("254")) return "+" + trimmed;
+    return "+" + trimmed;
+  };
+
+  const handleSendOtp = async () => {
+    if (!phone) {
+      toast({ title: "Enter your phone number", variant: "destructive" });
+      return;
+    }
+    setSubmitting(true);
+    const { error } = await supabase.auth.signInWithOtp({ phone: normalizePhone(phone) });
+    if (error) {
+      toast({ title: "Failed to send code", description: error.message, variant: "destructive" });
+    } else {
+      setOtpSent(true);
+      toast({ title: "Code sent", description: "Check your SMS for the verification code." });
+    }
+    setSubmitting(false);
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    const { error } = await supabase.auth.verifyOtp({
+      phone: normalizePhone(phone),
+      token: otp,
+      type: "sms",
+    });
+    if (error) toast({ title: "Verification failed", description: error.message, variant: "destructive" });
+    setSubmitting(false);
+  };
 
   if (loading) {
     return (
@@ -71,9 +110,10 @@ export default function Auth() {
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="login">
-              <TabsList className="grid w-full grid-cols-2 mb-4">
+              <TabsList className="grid w-full grid-cols-3 mb-4">
                 <TabsTrigger value="login">Login</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                <TabsTrigger value="phone">Phone</TabsTrigger>
               </TabsList>
               <TabsContent value="login">
                 <form onSubmit={handleLogin} className="space-y-4">
@@ -152,6 +192,54 @@ export default function Auth() {
                     Sign up with Google
                   </Button>
                 </div>
+              </TabsContent>
+              <TabsContent value="phone">
+                <form onSubmit={handleVerifyOtp} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone number</Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="0712345678"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      required
+                      disabled={otpSent}
+                    />
+                    <p className="text-xs text-muted-foreground">Kenyan numbers auto-prefixed with +254.</p>
+                  </div>
+                  {!otpSent ? (
+                    <Button type="button" className="w-full" onClick={handleSendOtp} disabled={submitting}>
+                      {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                      Send verification code
+                    </Button>
+                  ) : (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="otp">Verification code</Label>
+                        <Input
+                          id="otp"
+                          inputMode="numeric"
+                          value={otp}
+                          onChange={(e) => setOtp(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <Button type="submit" className="w-full" disabled={submitting}>
+                        {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                        Verify & sign in
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="link"
+                        className="w-full text-sm"
+                        onClick={() => { setOtpSent(false); setOtp(""); }}
+                      >
+                        Use a different number
+                      </Button>
+                    </>
+                  )}
+                </form>
               </TabsContent>
             </Tabs>
           </CardContent>
