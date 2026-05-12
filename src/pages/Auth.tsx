@@ -19,6 +19,45 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+
+  const normalizePhone = (raw: string) => {
+    const trimmed = raw.trim().replace(/\s+/g, "");
+    if (trimmed.startsWith("+")) return trimmed;
+    if (trimmed.startsWith("0")) return "+254" + trimmed.slice(1);
+    if (trimmed.startsWith("254")) return "+" + trimmed;
+    return "+" + trimmed;
+  };
+
+  const handleSendOtp = async () => {
+    if (!phone) {
+      toast({ title: "Enter your phone number", variant: "destructive" });
+      return;
+    }
+    setSubmitting(true);
+    const { error } = await supabase.auth.signInWithOtp({ phone: normalizePhone(phone) });
+    if (error) {
+      toast({ title: "Failed to send code", description: error.message, variant: "destructive" });
+    } else {
+      setOtpSent(true);
+      toast({ title: "Code sent", description: "Check your SMS for the verification code." });
+    }
+    setSubmitting(false);
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    const { error } = await supabase.auth.verifyOtp({
+      phone: normalizePhone(phone),
+      token: otp,
+      type: "sms",
+    });
+    if (error) toast({ title: "Verification failed", description: error.message, variant: "destructive" });
+    setSubmitting(false);
+  };
 
   if (loading) {
     return (
