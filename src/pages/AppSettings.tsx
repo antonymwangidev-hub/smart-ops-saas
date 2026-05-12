@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Moon, Sun, Monitor, Sparkles } from "lucide-react";
+import { Loader2, Moon, Sun, Monitor, Sparkles, Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/components/ThemeProvider";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
@@ -22,6 +22,54 @@ export default function AppSettings() {
   const [orgName, setOrgName] = useState(currentOrg?.name || "");
   const [saving, setSaving] = useState(false);
   const { aiEnabled, autoEscalate, loading: prefsLoading, updatePreference } = useUserPreferences();
+
+  const currentPhone = user?.phone || (user?.user_metadata as any)?.phone || "";
+  const [newPhone, setNewPhone] = useState("");
+  const [phoneOtp, setPhoneOtp] = useState("");
+  const [phoneOtpSent, setPhoneOtpSent] = useState(false);
+  const [phoneSubmitting, setPhoneSubmitting] = useState(false);
+
+  const normalizePhone = (raw: string) => {
+    const trimmed = raw.trim().replace(/\s+/g, "");
+    if (trimmed.startsWith("+")) return trimmed;
+    if (trimmed.startsWith("0")) return "+254" + trimmed.slice(1);
+    if (trimmed.startsWith("254")) return "+" + trimmed;
+    return "+" + trimmed;
+  };
+
+  const handleRequestPhoneOtp = async () => {
+    if (!newPhone) {
+      toast({ title: "Enter a phone number", variant: "destructive" });
+      return;
+    }
+    setPhoneSubmitting(true);
+    const { error } = await supabase.auth.updateUser({ phone: normalizePhone(newPhone) });
+    if (error) {
+      toast({ title: "Failed to send code", description: error.message, variant: "destructive" });
+    } else {
+      setPhoneOtpSent(true);
+      toast({ title: "Code sent", description: "Check your SMS for the verification code." });
+    }
+    setPhoneSubmitting(false);
+  };
+
+  const handleVerifyPhoneChange = async () => {
+    setPhoneSubmitting(true);
+    const { error } = await supabase.auth.verifyOtp({
+      phone: normalizePhone(newPhone),
+      token: phoneOtp,
+      type: "phone_change",
+    });
+    if (error) {
+      toast({ title: "Verification failed", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Phone updated", description: "Your linked phone number has been changed." });
+      setPhoneOtpSent(false);
+      setPhoneOtp("");
+      setNewPhone("");
+    }
+    setPhoneSubmitting(false);
+  };
 
   const handleSave = async () => {
     if (!currentOrg) return;
@@ -123,6 +171,87 @@ export default function AppSettings() {
                 disabled={prefsLoading}
               />
             </div>
+          </CardContent>
+        </Card>
+
+        <Card className="glass">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Phone className="h-5 w-5 text-primary" />
+              Profile — Phone Number
+            </CardTitle>
+            <CardDescription>View your linked phone number and request an OTP to change it</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Linked phone number</Label>
+              <Input
+                value={currentPhone || "No phone linked"}
+                disabled
+                className="rounded-xl"
+              />
+            </div>
+
+            <div className="space-y-2 pt-2 border-t border-border">
+              <Label>{currentPhone ? "Change to new number" : "Add a phone number"}</Label>
+              <Input
+                type="tel"
+                placeholder="0712345678"
+                value={newPhone}
+                onChange={(e) => setNewPhone(e.target.value)}
+                disabled={phoneOtpSent}
+                className="rounded-xl"
+              />
+              <p className="text-xs text-muted-foreground">Kenyan numbers auto-prefixed with +254.</p>
+            </div>
+
+            {!phoneOtpSent ? (
+              <Button
+                onClick={handleRequestPhoneOtp}
+                disabled={phoneSubmitting || !newPhone}
+                className="rounded-xl"
+              >
+                {phoneSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Send verification code
+              </Button>
+            ) : (
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label>Verification code</Label>
+                  <Input
+                    inputMode="numeric"
+                    value={phoneOtp}
+                    onChange={(e) => setPhoneOtp(e.target.value)}
+                    className="rounded-xl"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleVerifyPhoneChange}
+                    disabled={phoneSubmitting || !phoneOtp}
+                    className="rounded-xl"
+                  >
+                    {phoneSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                    Verify & save
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={handleRequestPhoneOtp}
+                    disabled={phoneSubmitting}
+                    className="rounded-xl"
+                  >
+                    Resend code
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => { setPhoneOtpSent(false); setPhoneOtp(""); }}
+                    className="rounded-xl"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
