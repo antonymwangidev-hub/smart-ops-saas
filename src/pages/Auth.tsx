@@ -193,6 +193,54 @@ export default function Auth() {
                   </Button>
                 </div>
               </TabsContent>
+              <TabsContent value="phone">
+                <form onSubmit={handleVerifyOtp} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone number</Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="0712345678"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      required
+                      disabled={otpSent}
+                    />
+                    <p className="text-xs text-muted-foreground">Kenyan numbers auto-prefixed with +254.</p>
+                  </div>
+                  {!otpSent ? (
+                    <Button type="button" className="w-full" onClick={handleSendOtp} disabled={submitting}>
+                      {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                      Send verification code
+                    </Button>
+                  ) : (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="otp">Verification code</Label>
+                        <Input
+                          id="otp"
+                          inputMode="numeric"
+                          value={otp}
+                          onChange={(e) => setOtp(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <Button type="submit" className="w-full" disabled={submitting}>
+                        {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                        Verify & sign in
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="link"
+                        className="w-full text-sm"
+                        onClick={() => { setOtpSent(false); setOtp(""); }}
+                      >
+                        Use a different number
+                      </Button>
+                    </>
+                  )}
+                </form>
+              </TabsContent>
             </Tabs>
           </CardContent>
         </Card>
