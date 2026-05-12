@@ -23,6 +23,54 @@ export default function AppSettings() {
   const [saving, setSaving] = useState(false);
   const { aiEnabled, autoEscalate, loading: prefsLoading, updatePreference } = useUserPreferences();
 
+  const currentPhone = user?.phone || (user?.user_metadata as any)?.phone || "";
+  const [newPhone, setNewPhone] = useState("");
+  const [phoneOtp, setPhoneOtp] = useState("");
+  const [phoneOtpSent, setPhoneOtpSent] = useState(false);
+  const [phoneSubmitting, setPhoneSubmitting] = useState(false);
+
+  const normalizePhone = (raw: string) => {
+    const trimmed = raw.trim().replace(/\s+/g, "");
+    if (trimmed.startsWith("+")) return trimmed;
+    if (trimmed.startsWith("0")) return "+254" + trimmed.slice(1);
+    if (trimmed.startsWith("254")) return "+" + trimmed;
+    return "+" + trimmed;
+  };
+
+  const handleRequestPhoneOtp = async () => {
+    if (!newPhone) {
+      toast({ title: "Enter a phone number", variant: "destructive" });
+      return;
+    }
+    setPhoneSubmitting(true);
+    const { error } = await supabase.auth.updateUser({ phone: normalizePhone(newPhone) });
+    if (error) {
+      toast({ title: "Failed to send code", description: error.message, variant: "destructive" });
+    } else {
+      setPhoneOtpSent(true);
+      toast({ title: "Code sent", description: "Check your SMS for the verification code." });
+    }
+    setPhoneSubmitting(false);
+  };
+
+  const handleVerifyPhoneChange = async () => {
+    setPhoneSubmitting(true);
+    const { error } = await supabase.auth.verifyOtp({
+      phone: normalizePhone(newPhone),
+      token: phoneOtp,
+      type: "phone_change",
+    });
+    if (error) {
+      toast({ title: "Verification failed", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Phone updated", description: "Your linked phone number has been changed." });
+      setPhoneOtpSent(false);
+      setPhoneOtp("");
+      setNewPhone("");
+    }
+    setPhoneSubmitting(false);
+  };
+
   const handleSave = async () => {
     if (!currentOrg) return;
     setSaving(true);
