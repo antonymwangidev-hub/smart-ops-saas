@@ -159,12 +159,31 @@ Deno.serve(async (req) => {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+      const { data: prevMember } = await adminClient
+        .from("organization_members")
+        .select("role")
+        .eq("user_id", targetUserId)
+        .eq("organization_id", org_id)
+        .maybeSingle();
       const { error: rmError } = await adminClient
         .from("organization_members")
         .delete()
         .eq("user_id", targetUserId)
         .eq("organization_id", org_id);
       if (rmError) throw rmError;
+      const { data: targetData } = await adminClient.auth.admin.getUserById(targetUserId);
+      await adminClient.from("activity_logs").insert({
+        organization_id: org_id,
+        user_id: user.id,
+        action: "role_removed",
+        metadata: {
+          target_user_id: targetUserId,
+          target_email: targetData?.user?.email ?? null,
+          previous_role: prevMember?.role ?? null,
+          changed_by_email: user.email,
+          source: "platform_admin",
+        },
+      });
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
