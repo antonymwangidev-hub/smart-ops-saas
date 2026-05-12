@@ -204,6 +204,19 @@ Deno.serve(async (req) => {
           .from("organization_members")
           .update({ role: "admin" })
           .eq("id", existing.id);
+        await adminClient.from("activity_logs").insert({
+          organization_id: org_id,
+          user_id: user.id,
+          action: "role_updated",
+          metadata: {
+            target_user_id: targetUser.id,
+            target_email: targetUser.email,
+            new_role: "admin",
+            previous_role: existing ? "member" : null,
+            changed_by_email: user.email,
+            source: "platform_admin",
+          },
+        });
         return new Response(JSON.stringify({ success: true, message: "User role updated to owner" }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -212,6 +225,18 @@ Deno.serve(async (req) => {
         .from("organization_members")
         .insert({ user_id: targetUser.id, organization_id: org_id, role: "admin" });
       if (insertError) throw insertError;
+      await adminClient.from("activity_logs").insert({
+        organization_id: org_id,
+        user_id: user.id,
+        action: "role_added",
+        metadata: {
+          target_user_id: targetUser.id,
+          target_email: targetUser.email,
+          new_role: "admin",
+          changed_by_email: user.email,
+          source: "platform_admin",
+        },
+      });
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
