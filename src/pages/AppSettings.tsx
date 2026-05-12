@@ -176,6 +176,87 @@ export default function AppSettings() {
 
         <Card className="glass">
           <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Phone className="h-5 w-5 text-primary" />
+              Profile — Phone Number
+            </CardTitle>
+            <CardDescription>View your linked phone number and request an OTP to change it</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Linked phone number</Label>
+              <Input
+                value={currentPhone || "No phone linked"}
+                disabled
+                className="rounded-xl"
+              />
+            </div>
+
+            <div className="space-y-2 pt-2 border-t border-border">
+              <Label>{currentPhone ? "Change to new number" : "Add a phone number"}</Label>
+              <Input
+                type="tel"
+                placeholder="0712345678"
+                value={newPhone}
+                onChange={(e) => setNewPhone(e.target.value)}
+                disabled={phoneOtpSent}
+                className="rounded-xl"
+              />
+              <p className="text-xs text-muted-foreground">Kenyan numbers auto-prefixed with +254.</p>
+            </div>
+
+            {!phoneOtpSent ? (
+              <Button
+                onClick={handleRequestPhoneOtp}
+                disabled={phoneSubmitting || !newPhone}
+                className="rounded-xl"
+              >
+                {phoneSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Send verification code
+              </Button>
+            ) : (
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label>Verification code</Label>
+                  <Input
+                    inputMode="numeric"
+                    value={phoneOtp}
+                    onChange={(e) => setPhoneOtp(e.target.value)}
+                    className="rounded-xl"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleVerifyPhoneChange}
+                    disabled={phoneSubmitting || !phoneOtp}
+                    className="rounded-xl"
+                  >
+                    {phoneSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                    Verify & save
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={handleRequestPhoneOtp}
+                    disabled={phoneSubmitting}
+                    className="rounded-xl"
+                  >
+                    Resend code
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => { setPhoneOtpSent(false); setPhoneOtp(""); }}
+                    className="rounded-xl"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="glass">
+          <CardHeader>
             <CardTitle>Account</CardTitle>
             <CardDescription>Your account information</CardDescription>
           </CardHeader>
