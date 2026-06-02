@@ -19,17 +19,23 @@ import { useCurrency } from "@/contexts/CurrencyContext";
 interface ProductForm {
   name: string;
   sku: string;
+  barcode: string;
   description: string;
   price: string;
   cost_price: string;
   stock_quantity: string;
   low_stock_threshold: string;
   category: string;
+  unit_of_measure: string;
+  tax_rate: string;
+  batch_number: string;
+  expiry_date: string;
 }
 
 const emptyForm: ProductForm = {
-  name: "", sku: "", description: "", price: "", cost_price: "",
+  name: "", sku: "", barcode: "", description: "", price: "", cost_price: "",
   stock_quantity: "0", low_stock_threshold: "10", category: "",
+  unit_of_measure: "pcs", tax_rate: "0", batch_number: "", expiry_date: "",
 };
 
 export default function Products() {
@@ -67,6 +73,17 @@ export default function Products() {
   const totalPages = Math.ceil(totalCount / pageSize);
 
   const lowStockProducts = products.filter((p: any) => p.stock_quantity <= p.low_stock_threshold && p.is_active);
+  const outOfStockProducts = products.filter((p: any) => p.stock_quantity <= 0 && p.is_active);
+  const expiringSoon = products.filter((p: any) => {
+    if (!p.expiry_date) return false;
+    const d = new Date(p.expiry_date);
+    const diff = (d.getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+    return diff <= 30 && diff >= -7;
+  });
+  const deadStock = products.filter((p: any) => p.stock_quantity > 0 && p.is_active && (() => {
+    const updated = new Date(p.updated_at).getTime();
+    return (Date.now() - updated) > 1000 * 60 * 60 * 24 * 60; // not updated in 60 days
+  })());
 
   const filteredProducts = products.filter((p: any) => {
     const matchesSearch = !search ||
@@ -84,12 +101,17 @@ export default function Products() {
         organization_id: currentOrg.id,
         name: form.name.trim(),
         sku: form.sku.trim() || null,
+        barcode: form.barcode.trim() || null,
         description: form.description.trim() || null,
         price: parseFloat(form.price) || 0,
         cost_price: parseFloat(form.cost_price) || 0,
         stock_quantity: parseInt(form.stock_quantity) || 0,
         low_stock_threshold: parseInt(form.low_stock_threshold) || 10,
         category: form.category.trim() || null,
+        unit_of_measure: form.unit_of_measure.trim() || "pcs",
+        tax_rate: parseFloat(form.tax_rate) || 0,
+        batch_number: form.batch_number.trim() || null,
+        expiry_date: form.expiry_date || null,
       };
       if (editingId) {
         const { error } = await supabase.from("products" as any).update(payload).eq("id", editingId);
@@ -135,12 +157,17 @@ export default function Products() {
     setForm({
       name: product.name,
       sku: product.sku || "",
+      barcode: product.barcode || "",
       description: product.description || "",
       price: String(product.price),
       cost_price: String(product.cost_price || ""),
       stock_quantity: String(product.stock_quantity),
       low_stock_threshold: String(product.low_stock_threshold),
       category: product.category || "",
+      unit_of_measure: product.unit_of_measure || "pcs",
+      tax_rate: String(product.tax_rate ?? 0),
+      batch_number: product.batch_number || "",
+      expiry_date: product.expiry_date ? String(product.expiry_date).slice(0, 10) : "",
     });
     setDialogOpen(true);
   };
@@ -169,7 +196,28 @@ export default function Products() {
           <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" />Add Product</Button>
         </div>
 
-        {/* Low-stock alert */}
+        {/* Stock intelligence */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Out of stock</div><div className="text-2xl font-bold text-destructive">{outOfStockProducts.length}</div></CardContent></Card>
+          <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Low stock</div><div className="text-2xl font-bold text-warning">{lowStockProducts.length}</div></CardContent></Card>
+          <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Expiring ≤30d</div><div className="text-2xl font-bold text-orange-500">{expiringSoon.length}</div></CardContent></Card>
+          <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Dead stock (60d)</div><div className="text-2xl font-bold text-muted-foreground">{deadStock.length}</div></CardContent></Card>
+        </div>
+
+        {expiringSoon.length > 0 && (
+          <Card className="border-orange-500/30 bg-orange-500/5">
+            <CardContent className="flex items-start gap-3 p-4">
+              <AlertTriangle className="h-5 w-5 text-orange-500 shrink-0 mt-0.5" />
+              <div>
+                <div className="font-medium text-orange-500">Expiring Products</div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {expiringSoon.slice(0, 5).map((p: any) => `${p.name} (${p.expiry_date})`).join(", ")}
+                  {expiringSoon.length > 5 && ` and ${expiringSoon.length - 5} more`}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
         {lowStockProducts.length > 0 && (
           <Card className="border-destructive/30 bg-destructive/5">
             <CardContent className="flex items-start gap-3 p-4">
@@ -301,8 +349,16 @@ export default function Products() {
                   <Input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} maxLength={100} />
                 </div>
                 <div className="space-y-2">
+                  <Label>Barcode</Label>
+                  <Input value={form.barcode} onChange={(e) => setForm({ ...form, barcode: e.target.value })} maxLength={100} placeholder="Scan or type" />
+                </div>
+                <div className="space-y-2">
                   <Label>Category</Label>
                   <Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} maxLength={100} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Unit of Measure</Label>
+                  <Input value={form.unit_of_measure} onChange={(e) => setForm({ ...form, unit_of_measure: e.target.value })} placeholder="pcs, kg, ltr, box…" maxLength={20} />
                 </div>
                 <div className="space-y-2">
                   <Label>Price</Label>
@@ -319,6 +375,18 @@ export default function Products() {
                 <div className="space-y-2">
                   <Label>Low Stock Threshold</Label>
                   <Input type="number" min="0" value={form.low_stock_threshold} onChange={(e) => setForm({ ...form, low_stock_threshold: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Tax Rate (%)</Label>
+                  <Input type="number" step="0.01" min="0" max="100" value={form.tax_rate} onChange={(e) => setForm({ ...form, tax_rate: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Batch Number</Label>
+                  <Input value={form.batch_number} onChange={(e) => setForm({ ...form, batch_number: e.target.value })} maxLength={100} />
+                </div>
+                <div className="space-y-2 col-span-2">
+                  <Label>Expiry Date (for perishables / pharma)</Label>
+                  <Input type="date" value={form.expiry_date} onChange={(e) => setForm({ ...form, expiry_date: e.target.value })} />
                 </div>
                 <div className="space-y-2 col-span-2">
                   <Label>Description</Label>

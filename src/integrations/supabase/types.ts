@@ -497,12 +497,71 @@ export type Database = {
         }
         Relationships: []
       }
+      product_brands: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      product_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
+          barcode: string | null
+          batch_number: string | null
+          brand_id: string | null
           category: string | null
+          category_id: string | null
           cost_price: number | null
           created_at: string
           description: string | null
+          expiry_date: string | null
           id: string
           is_active: boolean
           low_stock_threshold: number
@@ -511,13 +570,20 @@ export type Database = {
           price: number
           sku: string | null
           stock_quantity: number
+          tax_rate: number
+          unit_of_measure: string
           updated_at: string
         }
         Insert: {
+          barcode?: string | null
+          batch_number?: string | null
+          brand_id?: string | null
           category?: string | null
+          category_id?: string | null
           cost_price?: number | null
           created_at?: string
           description?: string | null
+          expiry_date?: string | null
           id?: string
           is_active?: boolean
           low_stock_threshold?: number
@@ -526,13 +592,20 @@ export type Database = {
           price?: number
           sku?: string | null
           stock_quantity?: number
+          tax_rate?: number
+          unit_of_measure?: string
           updated_at?: string
         }
         Update: {
+          barcode?: string | null
+          batch_number?: string | null
+          brand_id?: string | null
           category?: string | null
+          category_id?: string | null
           cost_price?: number | null
           created_at?: string
           description?: string | null
+          expiry_date?: string | null
           id?: string
           is_active?: boolean
           low_stock_threshold?: number
@@ -541,6 +614,8 @@ export type Database = {
           price?: number
           sku?: string | null
           stock_quantity?: number
+          tax_rate?: number
+          unit_of_measure?: string
           updated_at?: string
         }
         Relationships: [
@@ -583,32 +658,38 @@ export type Database = {
       sale_items: {
         Row: {
           created_at: string
+          discount_amount: number
           id: string
           organization_id: string
           product_id: string
           product_name: string
           quantity: number
           sale_id: string
+          tax_rate: number
           unit_price: number
         }
         Insert: {
           created_at?: string
+          discount_amount?: number
           id?: string
           organization_id: string
           product_id: string
           product_name: string
           quantity?: number
           sale_id: string
+          tax_rate?: number
           unit_price?: number
         }
         Update: {
           created_at?: string
+          discount_amount?: number
           id?: string
           organization_id?: string
           product_id?: string
           product_name?: string
           quantity?: number
           sale_id?: string
+          tax_rate?: number
           unit_price?: number
         }
         Relationships: [
@@ -621,6 +702,75 @@ export type Database = {
           },
         ]
       }
+      sale_return_items: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          product_id: string
+          product_name: string
+          quantity: number
+          sale_return_id: string
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          product_id: string
+          product_name: string
+          quantity?: number
+          sale_return_id: string
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          product_id?: string
+          product_name?: string
+          quantity?: number
+          sale_return_id?: string
+          unit_price?: number
+        }
+        Relationships: []
+      }
+      sale_returns: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          organization_id: string
+          processed_by: string | null
+          reason: string | null
+          refund_amount: number
+          refund_method: string
+          sale_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          organization_id: string
+          processed_by?: string | null
+          reason?: string | null
+          refund_amount?: number
+          refund_method?: string
+          sale_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          processed_by?: string | null
+          reason?: string | null
+          refund_amount?: number
+          refund_method?: string
+          sale_id?: string | null
+        }
+        Relationships: []
+      }
       sales: {
         Row: {
           cash_received: number | null
@@ -628,11 +778,14 @@ export type Database = {
           created_at: string
           created_by: string | null
           customer_name: string | null
+          discount_amount: number
           id: string
           is_credit: boolean
           notes: string | null
           organization_id: string
           payment_method: string
+          subtotal: number
+          tax_amount: number
           total_amount: number
         }
         Insert: {
@@ -641,11 +794,14 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           customer_name?: string | null
+          discount_amount?: number
           id?: string
           is_credit?: boolean
           notes?: string | null
           organization_id: string
           payment_method?: string
+          subtotal?: number
+          tax_amount?: number
           total_amount?: number
         }
         Update: {
@@ -654,11 +810,14 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           customer_name?: string | null
+          discount_amount?: number
           id?: string
           is_credit?: boolean
           notes?: string | null
           organization_id?: string
           payment_method?: string
+          subtotal?: number
+          tax_amount?: number
           total_amount?: number
         }
         Relationships: []

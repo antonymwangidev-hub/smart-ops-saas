@@ -20,6 +20,7 @@ import Products from "./pages/Products";
 import POS from "./pages/POS";
 import DailySummary from "./pages/DailySummary";
 import CreditSales from "./pages/CreditSales";
+import Returns from "./pages/Returns";
 import StaffManagement from "./pages/StaffManagement";
 import ResetPassword from "./pages/ResetPassword";
 import Analytics from "./pages/Analytics";
@@ -52,6 +53,7 @@ const App = () => (
               <Route path="/daily-summary" element={<PrivateRoute><DailySummary /></PrivateRoute>} />
               {/* Staff+ routes */}
               <Route path="/credit-sales" element={<PrivateRoute><RoleRoute requiredRole="staff"><CreditSales /></RoleRoute></PrivateRoute>} />
+              <Route path="/returns" element={<PrivateRoute><RoleRoute requiredRole="staff"><Returns /></RoleRoute></PrivateRoute>} />
               <Route path="/products" element={<PrivateRoute><RoleRoute requiredRole="staff"><Products /></RoleRoute></PrivateRoute>} />
               <Route path="/dashboard" element={<PrivateRoute><RoleRoute requiredRole="staff"><Dashboard /></RoleRoute></PrivateRoute>} />
               <Route path="/customers" element={<PrivateRoute><RoleRoute requiredRole="staff"><Customers /></RoleRoute></PrivateRoute>} />

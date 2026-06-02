@@ -6,7 +6,7 @@ export type OrgRole = "admin" | "staff" | "attendant";
 const ROLE_ROUTES: Record<OrgRole, string[]> = {
   admin: ["*"], // full access
   staff: [
-    "/pos", "/daily-summary", "/credit-sales", "/products",
+    "/pos", "/daily-summary", "/credit-sales", "/products", "/returns",
     "/dashboard", "/customers", "/orders", "/tasks", "/automations",
     "/documents", "/analytics", "/notifications", "/settings",
   ],
