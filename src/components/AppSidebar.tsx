@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, Users, ShoppingCart, CheckSquare, Zap, BarChart3, Settings, Bell, LogOut, ChevronDown, FileText, Shield, Package, Receipt, CreditCard, Calculator, UserCog
+  LayoutDashboard, Users, ShoppingCart, CheckSquare, Zap, BarChart3, Settings, Bell, LogOut, ChevronDown, FileText, Shield, Package, Receipt, CreditCard, Calculator, UserCog, Undo2
 } from "lucide-react";
 import { usePlatformAdmin } from "@/hooks/usePlatformAdmin";
 import { useOrgRole } from "@/hooks/useOrgRole";
@@ -17,6 +17,7 @@ const posItems = [
   { title: "Sell", url: "/pos", icon: ShoppingCart, minRole: "attendant" as const },
   { title: "Today's Sales", url: "/daily-summary", icon: Calculator, minRole: "attendant" as const },
   { title: "Credit (Deni)", url: "/credit-sales", icon: CreditCard, minRole: "staff" as const },
+  { title: "Returns", url: "/returns", icon: Undo2, minRole: "staff" as const },
   { title: "Products", url: "/products", icon: Package, minRole: "staff" as const },
 ];
 
