@@ -73,6 +73,17 @@ export default function Products() {
   const totalPages = Math.ceil(totalCount / pageSize);
 
   const lowStockProducts = products.filter((p: any) => p.stock_quantity <= p.low_stock_threshold && p.is_active);
+  const outOfStockProducts = products.filter((p: any) => p.stock_quantity <= 0 && p.is_active);
+  const expiringSoon = products.filter((p: any) => {
+    if (!p.expiry_date) return false;
+    const d = new Date(p.expiry_date);
+    const diff = (d.getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+    return diff <= 30 && diff >= -7;
+  });
+  const deadStock = products.filter((p: any) => p.stock_quantity > 0 && p.is_active && (() => {
+    const updated = new Date(p.updated_at).getTime();
+    return (Date.now() - updated) > 1000 * 60 * 60 * 24 * 60; // not updated in 60 days
+  })());
 
   const filteredProducts = products.filter((p: any) => {
     const matchesSearch = !search ||
@@ -317,8 +328,16 @@ export default function Products() {
                   <Input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} maxLength={100} />
                 </div>
                 <div className="space-y-2">
+                  <Label>Barcode</Label>
+                  <Input value={form.barcode} onChange={(e) => setForm({ ...form, barcode: e.target.value })} maxLength={100} placeholder="Scan or type" />
+                </div>
+                <div className="space-y-2">
                   <Label>Category</Label>
                   <Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} maxLength={100} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Unit of Measure</Label>
+                  <Input value={form.unit_of_measure} onChange={(e) => setForm({ ...form, unit_of_measure: e.target.value })} placeholder="pcs, kg, ltr, box…" maxLength={20} />
                 </div>
                 <div className="space-y-2">
                   <Label>Price</Label>
@@ -335,6 +354,18 @@ export default function Products() {
                 <div className="space-y-2">
                   <Label>Low Stock Threshold</Label>
                   <Input type="number" min="0" value={form.low_stock_threshold} onChange={(e) => setForm({ ...form, low_stock_threshold: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Tax Rate (%)</Label>
+                  <Input type="number" step="0.01" min="0" max="100" value={form.tax_rate} onChange={(e) => setForm({ ...form, tax_rate: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Batch Number</Label>
+                  <Input value={form.batch_number} onChange={(e) => setForm({ ...form, batch_number: e.target.value })} maxLength={100} />
+                </div>
+                <div className="space-y-2 col-span-2">
+                  <Label>Expiry Date (for perishables / pharma)</Label>
+                  <Input type="date" value={form.expiry_date} onChange={(e) => setForm({ ...form, expiry_date: e.target.value })} />
                 </div>
                 <div className="space-y-2 col-span-2">
                   <Label>Description</Label>
