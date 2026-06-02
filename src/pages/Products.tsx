@@ -196,7 +196,28 @@ export default function Products() {
           <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" />Add Product</Button>
         </div>
 
-        {/* Low-stock alert */}
+        {/* Stock intelligence */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Out of stock</div><div className="text-2xl font-bold text-destructive">{outOfStockProducts.length}</div></CardContent></Card>
+          <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Low stock</div><div className="text-2xl font-bold text-warning">{lowStockProducts.length}</div></CardContent></Card>
+          <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Expiring ≤30d</div><div className="text-2xl font-bold text-orange-500">{expiringSoon.length}</div></CardContent></Card>
+          <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Dead stock (60d)</div><div className="text-2xl font-bold text-muted-foreground">{deadStock.length}</div></CardContent></Card>
+        </div>
+
+        {expiringSoon.length > 0 && (
+          <Card className="border-orange-500/30 bg-orange-500/5">
+            <CardContent className="flex items-start gap-3 p-4">
+              <AlertTriangle className="h-5 w-5 text-orange-500 shrink-0 mt-0.5" />
+              <div>
+                <div className="font-medium text-orange-500">Expiring Products</div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {expiringSoon.slice(0, 5).map((p: any) => `${p.name} (${p.expiry_date})`).join(", ")}
+                  {expiringSoon.length > 5 && ` and ${expiringSoon.length - 5} more`}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
         {lowStockProducts.length > 0 && (
           <Card className="border-destructive/30 bg-destructive/5">
             <CardContent className="flex items-start gap-3 p-4">
