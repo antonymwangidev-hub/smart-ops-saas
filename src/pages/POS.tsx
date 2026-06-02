@@ -194,7 +194,7 @@ export default function POS() {
 
     setSubmitting(true);
     const change = paymentMethod === "cash" && !isCredit ? Math.max(0, received - cartTotal) : 0;
-    const persistedMethod = isCredit ? "credit" : paymentMethod;
+    const persistedMethod: any = isCredit ? "credit" : paymentMethod;
     const persistedCash = paymentMethod === "cash" ? received : (paymentMethod === "mixed" ? received : 0);
 
     const noteParts: string[] = [];
