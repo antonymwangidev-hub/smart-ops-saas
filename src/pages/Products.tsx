@@ -19,17 +19,23 @@ import { useCurrency } from "@/contexts/CurrencyContext";
 interface ProductForm {
   name: string;
   sku: string;
+  barcode: string;
   description: string;
   price: string;
   cost_price: string;
   stock_quantity: string;
   low_stock_threshold: string;
   category: string;
+  unit_of_measure: string;
+  tax_rate: string;
+  batch_number: string;
+  expiry_date: string;
 }
 
 const emptyForm: ProductForm = {
-  name: "", sku: "", description: "", price: "", cost_price: "",
+  name: "", sku: "", barcode: "", description: "", price: "", cost_price: "",
   stock_quantity: "0", low_stock_threshold: "10", category: "",
+  unit_of_measure: "pcs", tax_rate: "0", batch_number: "", expiry_date: "",
 };
 
 export default function Products() {
@@ -84,12 +90,17 @@ export default function Products() {
         organization_id: currentOrg.id,
         name: form.name.trim(),
         sku: form.sku.trim() || null,
+        barcode: form.barcode.trim() || null,
         description: form.description.trim() || null,
         price: parseFloat(form.price) || 0,
         cost_price: parseFloat(form.cost_price) || 0,
         stock_quantity: parseInt(form.stock_quantity) || 0,
         low_stock_threshold: parseInt(form.low_stock_threshold) || 10,
         category: form.category.trim() || null,
+        unit_of_measure: form.unit_of_measure.trim() || "pcs",
+        tax_rate: parseFloat(form.tax_rate) || 0,
+        batch_number: form.batch_number.trim() || null,
+        expiry_date: form.expiry_date || null,
       };
       if (editingId) {
         const { error } = await supabase.from("products" as any).update(payload).eq("id", editingId);
@@ -135,12 +146,17 @@ export default function Products() {
     setForm({
       name: product.name,
       sku: product.sku || "",
+      barcode: product.barcode || "",
       description: product.description || "",
       price: String(product.price),
       cost_price: String(product.cost_price || ""),
       stock_quantity: String(product.stock_quantity),
       low_stock_threshold: String(product.low_stock_threshold),
       category: product.category || "",
+      unit_of_measure: product.unit_of_measure || "pcs",
+      tax_rate: String(product.tax_rate ?? 0),
+      batch_number: product.batch_number || "",
+      expiry_date: product.expiry_date ? String(product.expiry_date).slice(0, 10) : "",
     });
     setDialogOpen(true);
   };
