@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, Users, ShoppingCart, CheckSquare, Zap, BarChart3, Settings, Bell, LogOut, ChevronDown, FileText, Shield, Package, Receipt, CreditCard, Calculator, UserCog, Undo2, Truck, ClipboardList
+  LayoutDashboard, Users, ShoppingCart, CheckSquare, Zap, BarChart3, Settings, Bell, LogOut, ChevronDown, FileText, Shield, Package, Receipt, CreditCard, Calculator, UserCog, Undo2, Truck, ClipboardList, Wallet, AlertCircle, TrendingUp
 } from "lucide-react";
 import { usePlatformAdmin } from "@/hooks/usePlatformAdmin";
 import { useOrgRole } from "@/hooks/useOrgRole";
@@ -31,6 +31,9 @@ const manageItems = [
   { title: "Analytics", url: "/analytics", icon: BarChart3, minRole: "staff" as const },
   { title: "Suppliers", url: "/suppliers", icon: Truck, minRole: "staff" as const },
   { title: "Purchase Orders", url: "/purchases", icon: ClipboardList, minRole: "staff" as const },
+  { title: "Expenses", url: "/expenses", icon: Wallet, minRole: "staff" as const },
+  { title: "Debtors", url: "/debtors", icon: AlertCircle, minRole: "staff" as const },
+  { title: "Finance", url: "/finance", icon: TrendingUp, minRole: "admin" as const },
 ];
 
 const secondaryItems = [
@@ -59,7 +62,7 @@ export function AppSidebar() {
   const visibleManageItems = filterByRole(manageItems);
   const visibleSecondaryItems = filterByRole(secondaryItems);
 
-  const renderNavItems = (items: typeof posItems) =>
+  const renderNavItems = (items: { title: string; url: string; icon: any; minRole: RoleName }[]) =>
     items.map((item) => {
       const active = location.pathname === item.url;
       return (

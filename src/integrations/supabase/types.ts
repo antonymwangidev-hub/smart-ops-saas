@@ -93,16 +93,73 @@ export type Database = {
           },
         ]
       }
+      credit_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          credit_sale_id: string
+          id: string
+          notes: string | null
+          organization_id: string
+          payment_date: string
+          payment_method: string
+          reference: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          credit_sale_id: string
+          id?: string
+          notes?: string | null
+          organization_id: string
+          payment_date?: string
+          payment_method?: string
+          reference?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          credit_sale_id?: string
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          payment_date?: string
+          payment_method?: string
+          reference?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_payments_credit_sale_id_fkey"
+            columns: ["credit_sale_id"]
+            isOneToOne: false
+            referencedRelation: "credit_sales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_payments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       credit_sales: {
         Row: {
           amount_paid: number
           created_at: string
           customer_name: string
+          due_date: string | null
           id: string
           is_settled: boolean
+          last_reminder_at: string | null
           notes: string | null
           organization_id: string
           phone: string | null
+          reminder_count: number
           sale_id: string | null
           total_amount: number
           updated_at: string
@@ -111,11 +168,14 @@ export type Database = {
           amount_paid?: number
           created_at?: string
           customer_name: string
+          due_date?: string | null
           id?: string
           is_settled?: boolean
+          last_reminder_at?: string | null
           notes?: string | null
           organization_id: string
           phone?: string | null
+          reminder_count?: number
           sale_id?: string | null
           total_amount?: number
           updated_at?: string
@@ -124,11 +184,14 @@ export type Database = {
           amount_paid?: number
           created_at?: string
           customer_name?: string
+          due_date?: string | null
           id?: string
           is_settled?: boolean
+          last_reminder_at?: string | null
           notes?: string | null
           organization_id?: string
           phone?: string | null
+          reminder_count?: number
           sale_id?: string | null
           total_amount?: number
           updated_at?: string
@@ -177,6 +240,110 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "customers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expense_categories: {
+        Row: {
+          color: string | null
+          created_at: string
+          id: string
+          name: string
+          organization_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          organization_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          organization_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_categories_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expenses: {
+        Row: {
+          amount: number
+          category_id: string | null
+          category_name: string | null
+          created_at: string
+          created_by: string | null
+          description: string
+          expense_date: string
+          id: string
+          is_recurring: boolean
+          notes: string | null
+          organization_id: string
+          payment_method: string
+          receipt_url: string | null
+          recurring_period: string | null
+          reference: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          category_id?: string | null
+          category_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          description: string
+          expense_date?: string
+          id?: string
+          is_recurring?: boolean
+          notes?: string | null
+          organization_id: string
+          payment_method?: string
+          receipt_url?: string | null
+          recurring_period?: string | null
+          reference?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category_id?: string | null
+          category_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          expense_date?: string
+          id?: string
+          is_recurring?: boolean
+          notes?: string | null
+          organization_id?: string
+          payment_method?: string
+          receipt_url?: string | null
+          recurring_period?: string | null
+          reference?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "expense_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -1258,6 +1425,10 @@ export type Database = {
         Returns: boolean
       }
       is_platform_admin: { Args: { _user_id: string }; Returns: boolean }
+      recompute_credit_sale: {
+        Args: { _credit_sale_id: string }
+        Returns: undefined
+      }
       recompute_supplier_balance: {
         Args: { _supplier_id: string }
         Returns: undefined

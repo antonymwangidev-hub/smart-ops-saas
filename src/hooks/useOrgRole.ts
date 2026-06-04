@@ -7,7 +7,7 @@ const ROLE_ROUTES: Record<OrgRole, string[]> = {
   admin: ["*"], // full access
   staff: [
     "/pos", "/daily-summary", "/credit-sales", "/products", "/returns",
-    "/suppliers", "/purchases",
+    "/suppliers", "/purchases", "/expenses", "/debtors",
     "/dashboard", "/customers", "/orders", "/tasks", "/automations",
     "/documents", "/analytics", "/notifications", "/settings",
   ],
