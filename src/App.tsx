@@ -23,6 +23,9 @@ import CreditSales from "./pages/CreditSales";
 import Returns from "./pages/Returns";
 import Suppliers from "./pages/Suppliers";
 import Purchases from "./pages/Purchases";
+import Expenses from "./pages/Expenses";
+import Debtors from "./pages/Debtors";
+import Finance from "./pages/Finance";
 import StaffManagement from "./pages/StaffManagement";
 import ResetPassword from "./pages/ResetPassword";
 import Analytics from "./pages/Analytics";
@@ -58,6 +61,9 @@ const App = () => (
               <Route path="/returns" element={<PrivateRoute><RoleRoute requiredRole="staff"><Returns /></RoleRoute></PrivateRoute>} />
               <Route path="/suppliers" element={<PrivateRoute><RoleRoute requiredRole="staff"><Suppliers /></RoleRoute></PrivateRoute>} />
               <Route path="/purchases" element={<PrivateRoute><RoleRoute requiredRole="staff"><Purchases /></RoleRoute></PrivateRoute>} />
+              <Route path="/expenses" element={<PrivateRoute><RoleRoute requiredRole="staff"><Expenses /></RoleRoute></PrivateRoute>} />
+              <Route path="/debtors" element={<PrivateRoute><RoleRoute requiredRole="staff"><Debtors /></RoleRoute></PrivateRoute>} />
+              <Route path="/finance" element={<PrivateRoute><RoleRoute requiredRole="admin"><Finance /></RoleRoute></PrivateRoute>} />
               <Route path="/products" element={<PrivateRoute><RoleRoute requiredRole="staff"><Products /></RoleRoute></PrivateRoute>} />
               <Route path="/dashboard" element={<PrivateRoute><RoleRoute requiredRole="staff"><Dashboard /></RoleRoute></PrivateRoute>} />
               <Route path="/customers" element={<PrivateRoute><RoleRoute requiredRole="staff"><Customers /></RoleRoute></PrivateRoute>} />
