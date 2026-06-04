@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, Users, ShoppingCart, CheckSquare, Zap, BarChart3, Settings, Bell, LogOut, ChevronDown, FileText, Shield, Package, Receipt, CreditCard, Calculator, UserCog, Undo2
+  LayoutDashboard, Users, ShoppingCart, CheckSquare, Zap, BarChart3, Settings, Bell, LogOut, ChevronDown, FileText, Shield, Package, Receipt, CreditCard, Calculator, UserCog, Undo2, Truck, ClipboardList
 } from "lucide-react";
 import { usePlatformAdmin } from "@/hooks/usePlatformAdmin";
 import { useOrgRole } from "@/hooks/useOrgRole";
@@ -29,6 +29,8 @@ const manageItems = [
   { title: "Automations", url: "/automations", icon: Zap, minRole: "staff" as const },
   { title: "Documents", url: "/documents", icon: FileText, minRole: "staff" as const },
   { title: "Analytics", url: "/analytics", icon: BarChart3, minRole: "staff" as const },
+  { title: "Suppliers", url: "/suppliers", icon: Truck, minRole: "staff" as const },
+  { title: "Purchase Orders", url: "/purchases", icon: ClipboardList, minRole: "staff" as const },
 ];
 
 const secondaryItems = [

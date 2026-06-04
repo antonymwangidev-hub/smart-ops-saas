@@ -21,6 +21,8 @@ import POS from "./pages/POS";
 import DailySummary from "./pages/DailySummary";
 import CreditSales from "./pages/CreditSales";
 import Returns from "./pages/Returns";
+import Suppliers from "./pages/Suppliers";
+import Purchases from "./pages/Purchases";
 import StaffManagement from "./pages/StaffManagement";
 import ResetPassword from "./pages/ResetPassword";
 import Analytics from "./pages/Analytics";
@@ -54,6 +56,8 @@ const App = () => (
               {/* Staff+ routes */}
               <Route path="/credit-sales" element={<PrivateRoute><RoleRoute requiredRole="staff"><CreditSales /></RoleRoute></PrivateRoute>} />
               <Route path="/returns" element={<PrivateRoute><RoleRoute requiredRole="staff"><Returns /></RoleRoute></PrivateRoute>} />
+              <Route path="/suppliers" element={<PrivateRoute><RoleRoute requiredRole="staff"><Suppliers /></RoleRoute></PrivateRoute>} />
+              <Route path="/purchases" element={<PrivateRoute><RoleRoute requiredRole="staff"><Purchases /></RoleRoute></PrivateRoute>} />
               <Route path="/products" element={<PrivateRoute><RoleRoute requiredRole="staff"><Products /></RoleRoute></PrivateRoute>} />
               <Route path="/dashboard" element={<PrivateRoute><RoleRoute requiredRole="staff"><Dashboard /></RoleRoute></PrivateRoute>} />
               <Route path="/customers" element={<PrivateRoute><RoleRoute requiredRole="staff"><Customers /></RoleRoute></PrivateRoute>} />
