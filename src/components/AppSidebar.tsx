@@ -62,7 +62,7 @@ export function AppSidebar() {
   const visibleManageItems = filterByRole(manageItems);
   const visibleSecondaryItems = filterByRole(secondaryItems);
 
-  const renderNavItems = (items: typeof posItems) =>
+  const renderNavItems = (items: { title: string; url: string; icon: any; minRole: RoleName }[]) =>
     items.map((item) => {
       const active = location.pathname === item.url;
       return (
