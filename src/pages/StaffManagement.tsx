@@ -124,7 +124,7 @@ export default function StaffManagement() {
     try {
       const { error } = await supabase
         .from("organization_members")
-        .update({ role: editRole as "admin" | "staff" | "attendant" })
+        .update({ role: editRole as any })
         .eq("id", editingMember.id)
         .eq("organization_id", currentOrg.id);
 
@@ -231,7 +231,11 @@ export default function StaffManagement() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="manager">Manager — Full operational access</SelectItem>
+                      <SelectItem value="accountant">Accountant — Finance, expenses, debtors</SelectItem>
+                      <SelectItem value="storekeeper">Storekeeper — Products, stock, purchasing</SelectItem>
                       <SelectItem value="staff">Staff — Manage products, orders, reports</SelectItem>
+                      <SelectItem value="cashier">Cashier — POS, returns, credit</SelectItem>
                       <SelectItem value="attendant">Attendant — POS sell screen only</SelectItem>
                     </SelectContent>
                   </Select>
@@ -356,7 +360,11 @@ export default function StaffManagement() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="admin">Owner — Full access</SelectItem>
+                  <SelectItem value="manager">Manager — Full operational access</SelectItem>
+                  <SelectItem value="accountant">Accountant — Finance, expenses, debtors</SelectItem>
+                  <SelectItem value="storekeeper">Storekeeper — Products, stock, purchasing</SelectItem>
                   <SelectItem value="staff">Staff — Manage products, orders, reports</SelectItem>
+                  <SelectItem value="cashier">Cashier — POS, returns, credit</SelectItem>
                   <SelectItem value="attendant">Attendant — POS sell screen only</SelectItem>
                 </SelectContent>
               </Select>
