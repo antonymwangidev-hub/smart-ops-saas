@@ -34,7 +34,7 @@ export default function Notifications() {
 
   useEffect(() => {
     if (!user) return;
-    const channel = supabase.channel("notifications-realtime")
+    const channel = supabase.channel(`user:${user.id}:notifications-realtime`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` }, () => fetchNotifications())
       .subscribe();
     return () => { supabase.removeChannel(channel); };

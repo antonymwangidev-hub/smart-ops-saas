@@ -82,7 +82,7 @@ export default function Tasks() {
 
   useEffect(() => {
     if (!currentOrg) return;
-    const channel = supabase.channel("tasks-realtime")
+    const channel = supabase.channel(`org:${currentOrg.id}:tasks-realtime`)
       .on("postgres_changes", { event: "*", schema: "public", table: "tasks", filter: `organization_id=eq.${currentOrg.id}` }, () =>
         queryClient.invalidateQueries({ queryKey: ["tasks", currentOrg.id] })
       )
