@@ -26,6 +26,9 @@ import Purchases from "./pages/Purchases";
 import Expenses from "./pages/Expenses";
 import Debtors from "./pages/Debtors";
 import Finance from "./pages/Finance";
+import Branches from "./pages/Branches";
+import StockTransfers from "./pages/StockTransfers";
+import Attendance from "./pages/Attendance";
 import StaffManagement from "./pages/StaffManagement";
 import ResetPassword from "./pages/ResetPassword";
 import Analytics from "./pages/Analytics";
@@ -76,6 +79,9 @@ const App = () => (
               <Route path="/settings" element={<PrivateRoute><RoleRoute requiredRole="staff"><AppSettings /></RoleRoute></PrivateRoute>} />
               {/* Admin-only routes */}
               <Route path="/staff" element={<PrivateRoute><RoleRoute requiredRole="admin"><StaffManagement /></RoleRoute></PrivateRoute>} />
+              <Route path="/branches" element={<PrivateRoute><RoleRoute requiredRole="admin"><Branches /></RoleRoute></PrivateRoute>} />
+              <Route path="/stock-transfers" element={<PrivateRoute><RoleRoute requiredRole="staff"><StockTransfers /></RoleRoute></PrivateRoute>} />
+              <Route path="/attendance" element={<PrivateRoute><Attendance /></PrivateRoute>} />
               <Route path="/admin" element={<PrivateRoute><PlatformAdmin /></PrivateRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
