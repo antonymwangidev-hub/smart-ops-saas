@@ -70,7 +70,7 @@ export function usePresence() {
 
     // Realtime subscription
     const channel = supabase
-      .channel("presence-updates")
+      .channel(`org:${currentOrg.id}:presence-updates`)
       .on("postgres_changes", {
         event: "*",
         schema: "public",
