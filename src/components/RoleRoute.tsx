@@ -1,10 +1,10 @@
 import { Navigate, useLocation } from "react-router-dom";
-import { useOrgRole } from "@/hooks/useOrgRole";
+import { useOrgRole, ROLE_LEVEL, type OrgRole } from "@/hooks/useOrgRole";
 
 interface RoleRouteProps {
   children: React.ReactNode;
   /** Minimum role needed. If not provided, uses path-based check. */
-  requiredRole?: "admin" | "staff";
+  requiredRole?: OrgRole;
 }
 
 export function RoleRoute({ children, requiredRole }: RoleRouteProps) {
@@ -12,9 +12,8 @@ export function RoleRoute({ children, requiredRole }: RoleRouteProps) {
   const location = useLocation();
 
   if (requiredRole) {
-    const roleHierarchy = { admin: 3, staff: 2, attendant: 1 };
-    const userLevel = roleHierarchy[role] || 0;
-    const requiredLevel = roleHierarchy[requiredRole] || 0;
+    const userLevel = ROLE_LEVEL[role] || 0;
+    const requiredLevel = ROLE_LEVEL[requiredRole] || 0;
     if (userLevel < requiredLevel) {
       return <Navigate to="/pos" replace />;
     }

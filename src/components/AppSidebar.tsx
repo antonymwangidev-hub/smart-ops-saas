@@ -1,8 +1,8 @@
 import {
-  LayoutDashboard, Users, ShoppingCart, CheckSquare, Zap, BarChart3, Settings, Bell, LogOut, ChevronDown, FileText, Shield, Package, Receipt, CreditCard, Calculator, UserCog, Undo2, Truck, ClipboardList, Wallet, AlertCircle, TrendingUp
+  LayoutDashboard, Users, ShoppingCart, CheckSquare, Zap, BarChart3, Settings, Bell, LogOut, ChevronDown, FileText, Shield, Package, Receipt, CreditCard, Calculator, UserCog, Undo2, Truck, ClipboardList, Wallet, AlertCircle, TrendingUp, Building2, ArrowLeftRight, Clock
 } from "lucide-react";
 import { usePlatformAdmin } from "@/hooks/usePlatformAdmin";
-import { useOrgRole } from "@/hooks/useOrgRole";
+import { useOrgRole, ROLE_LEVEL, type OrgRole } from "@/hooks/useOrgRole";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import {
@@ -14,35 +14,39 @@ import { useOrg } from "@/contexts/OrgContext";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const posItems = [
-  { title: "Sell", url: "/pos", icon: ShoppingCart, minRole: "attendant" as const },
-  { title: "Today's Sales", url: "/daily-summary", icon: Calculator, minRole: "attendant" as const },
-  { title: "Credit (Deni)", url: "/credit-sales", icon: CreditCard, minRole: "staff" as const },
-  { title: "Returns", url: "/returns", icon: Undo2, minRole: "staff" as const },
-  { title: "Products", url: "/products", icon: Package, minRole: "staff" as const },
+  { title: "Sell", url: "/pos", icon: ShoppingCart, minRole: "attendant" as OrgRole },
+  { title: "Today's Sales", url: "/daily-summary", icon: Calculator, minRole: "attendant" as OrgRole },
+  { title: "Credit (Deni)", url: "/credit-sales", icon: CreditCard, minRole: "cashier" as OrgRole },
+  { title: "Returns", url: "/returns", icon: Undo2, minRole: "cashier" as OrgRole },
+  { title: "Products", url: "/products", icon: Package, minRole: "storekeeper" as OrgRole },
 ];
 
 const manageItems = [
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, minRole: "staff" as const },
-  { title: "Customers", url: "/customers", icon: Users, minRole: "staff" as const },
-  { title: "Orders", url: "/orders", icon: Receipt, minRole: "staff" as const },
-  { title: "Tasks", url: "/tasks", icon: CheckSquare, minRole: "staff" as const },
-  { title: "Automations", url: "/automations", icon: Zap, minRole: "staff" as const },
-  { title: "Documents", url: "/documents", icon: FileText, minRole: "staff" as const },
-  { title: "Analytics", url: "/analytics", icon: BarChart3, minRole: "staff" as const },
-  { title: "Suppliers", url: "/suppliers", icon: Truck, minRole: "staff" as const },
-  { title: "Purchase Orders", url: "/purchases", icon: ClipboardList, minRole: "staff" as const },
-  { title: "Expenses", url: "/expenses", icon: Wallet, minRole: "staff" as const },
-  { title: "Debtors", url: "/debtors", icon: AlertCircle, minRole: "staff" as const },
-  { title: "Finance", url: "/finance", icon: TrendingUp, minRole: "admin" as const },
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, minRole: "staff" as OrgRole },
+  { title: "Customers", url: "/customers", icon: Users, minRole: "staff" as OrgRole },
+  { title: "Orders", url: "/orders", icon: Receipt, minRole: "staff" as OrgRole },
+  { title: "Tasks", url: "/tasks", icon: CheckSquare, minRole: "staff" as OrgRole },
+  { title: "Automations", url: "/automations", icon: Zap, minRole: "staff" as OrgRole },
+  { title: "Documents", url: "/documents", icon: FileText, minRole: "staff" as OrgRole },
+  { title: "Analytics", url: "/analytics", icon: BarChart3, minRole: "staff" as OrgRole },
+  { title: "Suppliers", url: "/suppliers", icon: Truck, minRole: "storekeeper" as OrgRole },
+  { title: "Purchase Orders", url: "/purchases", icon: ClipboardList, minRole: "storekeeper" as OrgRole },
+  { title: "Stock Transfers", url: "/stock-transfers", icon: ArrowLeftRight, minRole: "storekeeper" as OrgRole },
+  { title: "Expenses", url: "/expenses", icon: Wallet, minRole: "accountant" as OrgRole },
+  { title: "Debtors", url: "/debtors", icon: AlertCircle, minRole: "accountant" as OrgRole },
+  { title: "Finance", url: "/finance", icon: TrendingUp, minRole: "accountant" as OrgRole },
+];
+
+const opsItems = [
+  { title: "Attendance", url: "/attendance", icon: Clock, minRole: "attendant" as OrgRole },
 ];
 
 const secondaryItems = [
-  { title: "Notifications", url: "/notifications", icon: Bell, minRole: "staff" as const },
-  { title: "Settings", url: "/settings", icon: Settings, minRole: "staff" as const },
+  { title: "Notifications", url: "/notifications", icon: Bell, minRole: "cashier" as OrgRole },
+  { title: "Settings", url: "/settings", icon: Settings, minRole: "cashier" as OrgRole },
 ];
 
-const ROLE_LEVEL = { admin: 3, staff: 2, attendant: 1 } as const;
-type RoleName = keyof typeof ROLE_LEVEL;
+type RoleName = OrgRole;
 
 export function AppSidebar() {
   const { state } = useSidebar();
@@ -60,6 +64,7 @@ export function AppSidebar() {
 
   const visiblePosItems = filterByRole(posItems);
   const visibleManageItems = filterByRole(manageItems);
+  const visibleOpsItems = filterByRole(opsItems);
   const visibleSecondaryItems = filterByRole(secondaryItems);
 
   const renderNavItems = (items: { title: string; url: string; icon: any; minRole: RoleName }[]) =>
@@ -133,20 +138,32 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
 
-        {/* Owner-only: Staff Management */}
+        {visibleOpsItems.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground/70 px-2">Operations</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>{renderNavItems(visibleOpsItems)}</SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {/* Owner-only: Staff Management + Branches */}
         {role === "admin" && (
           <SidebarGroup>
             <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground/70 px-2">Business</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={location.pathname === "/branches"}>
+                    <NavLink to="/branches" end activeClassName="bg-primary/10 text-primary font-medium border-l-2 border-primary" className="rounded-lg transition-all duration-200 hover:bg-accent">
+                      <Building2 className={`h-4 w-4 ${location.pathname === "/branches" ? "text-primary" : ""}`} />
+                      {!collapsed && <span>Branches</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
                   <SidebarMenuButton asChild isActive={location.pathname === "/staff"}>
-                    <NavLink
-                      to="/staff"
-                      end
-                      activeClassName="bg-primary/10 text-primary font-medium border-l-2 border-primary"
-                      className="rounded-lg transition-all duration-200 hover:bg-accent"
-                    >
+                    <NavLink to="/staff" end activeClassName="bg-primary/10 text-primary font-medium border-l-2 border-primary" className="rounded-lg transition-all duration-200 hover:bg-accent">
                       <UserCog className={`h-4 w-4 ${location.pathname === "/staff" ? "text-primary" : ""}`} />
                       {!collapsed && <span>Staff Management</span>}
                     </NavLink>
