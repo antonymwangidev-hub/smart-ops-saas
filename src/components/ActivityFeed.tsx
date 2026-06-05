@@ -42,7 +42,7 @@ export function ActivityFeed() {
     fetchLogs();
     if (!currentOrg) return;
     const channel = supabase
-      .channel("activity-feed")
+      .channel(`org:${currentOrg.id}:activity-feed`)
       .on("postgres_changes", {
         event: "INSERT",
         schema: "public",

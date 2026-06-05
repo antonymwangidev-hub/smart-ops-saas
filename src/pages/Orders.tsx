@@ -120,7 +120,7 @@ export default function Orders() {
   // Realtime subscription
   useEffect(() => {
     if (!currentOrg) return;
-    const channel = supabase.channel("orders-realtime")
+    const channel = supabase.channel(`org:${currentOrg.id}:orders-realtime`)
       .on("postgres_changes", { event: "*", schema: "public", table: "orders", filter: `organization_id=eq.${currentOrg.id}` }, () => {
         queryClient.invalidateQueries({ queryKey: ["orders", currentOrg.id] });
       })
