@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Org members can view attachments" ON storage.objects;
