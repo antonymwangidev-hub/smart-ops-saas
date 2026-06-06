@@ -64,11 +64,26 @@ Deno.serve(async (req) => {
       throw new Error("Missing required fields: phone, amount, organization_id");
     }
 
+    // Verify the caller belongs to the organization they are billing
+    const { data: membership, error: memErr } = await supabase
+      .from("organization_members")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("organization_id", organization_id)
+      .maybeSingle();
+    if (memErr || !membership) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Forbidden" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Format phone: ensure 254 prefix
     let formattedPhone = phone.replace(/\s+/g, "").replace(/^0/, "254").replace(/^\+/, "");
     if (!formattedPhone.startsWith("254")) {
       formattedPhone = `254${formattedPhone}`;
     }
+
 
     const timestamp = getTimestamp();
     const password = btoa(`${SHORTCODE}${PASSKEY}${timestamp}`);
