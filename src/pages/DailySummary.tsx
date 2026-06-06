@@ -1,3 +1,4 @@
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/contexts/OrgContext";
@@ -5,17 +6,40 @@ import { useCurrency } from "@/contexts/CurrencyContext";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Banknote, Smartphone, ShoppingCart, TrendingUp, CreditCard, Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Banknote, Smartphone, ShoppingCart, CreditCard, Loader2, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
+
+function toLocalISODate(d: Date) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
 
 export default function DailySummary() {
   const { currentOrg } = useOrg();
   const { formatAmount } = useCurrency();
 
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
+  const today = useMemo(() => toLocalISODate(new Date()), []);
+  const [selectedDate, setSelectedDate] = useState<string>(today);
+  const isToday = selectedDate === today;
+
+  const { dayStart, dayEnd } = useMemo(() => {
+    const start = new Date(selectedDate + "T00:00:00");
+    const end = new Date(selectedDate + "T23:59:59.999");
+    return { dayStart: start, dayEnd: end };
+  }, [selectedDate]);
+
+  const shiftDay = (delta: number) => {
+    const d = new Date(selectedDate + "T12:00:00");
+    d.setDate(d.getDate() + delta);
+    const next = toLocalISODate(d);
+    if (next <= today) setSelectedDate(next);
+  };
 
   const { data, isLoading } = useQuery({
-    queryKey: ["daily_summary", currentOrg?.id, todayStart.toDateString()],
+    queryKey: ["daily_summary", currentOrg?.id, selectedDate],
     queryFn: async () => {
       if (!currentOrg) return null;
 
@@ -23,7 +47,9 @@ export default function DailySummary() {
         .from("sales")
         .select("*")
         .eq("organization_id", currentOrg.id)
-        .gte("created_at", todayStart.toISOString()) as any;
+        .gte("created_at", dayStart.toISOString())
+        .lte("created_at", dayEnd.toISOString())
+        .order("created_at", { ascending: false }) as any;
 
       const allSales = (sales || []) as any[];
       const totalSales = allSales.reduce((s: number, sale: any) => s + Number(sale.total_amount), 0);
@@ -35,19 +61,16 @@ export default function DailySummary() {
       const creditTotal = creditSales.reduce((s: number, sale: any) => s + Number(sale.total_amount), 0);
 
       return {
-        totalSales,
-        cashTotal,
-        mpesaTotal,
-        creditTotal,
+        totalSales, cashTotal, mpesaTotal, creditTotal,
         transactionCount: allSales.length,
         cashCount: cashSales.length,
         mpesaCount: mpesaSales.length,
         creditCount: creditSales.length,
-        recentSales: allSales.slice(0, 10),
+        recentSales: allSales.slice(0, 20),
       };
     },
     enabled: !!currentOrg,
-    refetchInterval: 30000,
+    refetchInterval: isToday ? 30000 : false,
   });
 
   const summary = data || {
@@ -55,13 +78,42 @@ export default function DailySummary() {
     transactionCount: 0, cashCount: 0, mpesaCount: 0, creditCount: 0, recentSales: [],
   };
 
+  const dateLabel = new Date(selectedDate + "T12:00:00").toLocaleDateString("en-KE", {
+    weekday: "long", year: "numeric", month: "long", day: "numeric"
+  });
+
   return (
     <AppLayout>
       <div className="space-y-4 px-1">
         <div>
-          <h1 className="text-xl font-bold text-foreground">Today's Summary</h1>
-          <p className="text-sm text-muted-foreground">{new Date().toLocaleDateString("en-KE", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
+          <h1 className="text-xl font-bold text-foreground">{isToday ? "Today's Summary" : "Sales History"}</h1>
+          <p className="text-sm text-muted-foreground">{dateLabel}</p>
         </div>
+
+        {/* Date navigator — persistent daily history */}
+        <Card>
+          <CardContent className="p-3 flex items-center gap-2">
+            <Button variant="outline" size="icon" className="h-9 w-9 shrink-0" onClick={() => shiftDay(-1)}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <div className="relative flex-1">
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Input
+                type="date"
+                value={selectedDate}
+                max={today}
+                onChange={(e) => setSelectedDate(e.target.value || today)}
+                className="h-9 pl-9"
+              />
+            </div>
+            <Button variant="outline" size="icon" className="h-9 w-9 shrink-0" onClick={() => shiftDay(1)} disabled={isToday}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            {!isToday && (
+              <Button variant="ghost" size="sm" className="h-9 shrink-0" onClick={() => setSelectedDate(today)}>Today</Button>
+            )}
+          </CardContent>
+        </Card>
 
         {isLoading ? (
           <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
