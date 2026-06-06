@@ -418,7 +418,7 @@ export default function POS() {
           </div>
 
           {/* Receipt (printable) */}
-          <Card className="print:shadow-none print:border-none">
+          <Card className="print-receipt print:shadow-none print:border-none">
             <CardContent className="p-4 text-sm font-mono">
               <div className="text-center font-bold">{currentOrg?.name}</div>
               <div className="text-center text-xs text-muted-foreground mb-2">Ref {lastSale.ref} · {new Date().toLocaleString()}</div>
