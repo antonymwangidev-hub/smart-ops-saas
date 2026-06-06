@@ -122,7 +122,7 @@ export default function DailySummary() {
             {/* Total sales hero */}
             <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
               <CardContent className="py-6 text-center">
-                <p className="text-sm text-muted-foreground mb-1">Total Sales Today</p>
+                <p className="text-sm text-muted-foreground mb-1">{isToday ? "Total Sales Today" : "Total Sales"}</p>
                 <p className="text-4xl font-bold text-foreground">{formatAmount(summary.totalSales)}</p>
                 <div className="flex items-center justify-center gap-1 mt-2">
                   <ShoppingCart className="h-4 w-4 text-muted-foreground" />
