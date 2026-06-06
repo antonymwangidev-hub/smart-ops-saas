@@ -1,4 +1,3 @@
-
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -13,8 +12,24 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Shared-secret validation: callback URL must include ?secret=<MPESA_CALLBACK_SECRET>
+    const expectedSecret = Deno.env.get("MPESA_CALLBACK_SECRET");
+    if (expectedSecret) {
+      const url = new URL(req.url);
+      const provided = url.searchParams.get("secret");
+      if (provided !== expectedSecret) {
+        console.warn("M-Pesa callback rejected: invalid or missing secret");
+        return new Response(JSON.stringify({ success: false }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    } else {
+      console.warn("MPESA_CALLBACK_SECRET is not set — callback endpoint is unauthenticated. Set it to enable shared-secret verification.");
+    }
+
     const body = await req.json();
-    console.log("M-Pesa callback received:", JSON.stringify(body));
+    console.log("M-Pesa callback received");
 
     const callback = body?.Body?.stkCallback;
     if (!callback) {
@@ -44,7 +59,7 @@ Deno.serve(async (req) => {
 
     const status = resultCode === 0 ? "completed" : "failed";
 
-    // Update the payment record
+    // Idempotency guard: only update payments still in 'pending'
     const { data: payment, error: updateError } = await supabase
       .from("mpesa_payments")
       .update({
@@ -54,14 +69,22 @@ Deno.serve(async (req) => {
         status,
       })
       .eq("checkout_request_id", checkoutRequestId)
+      .eq("status", "pending")
       .select("order_id, organization_id, amount")
-      .single();
+      .maybeSingle();
 
     if (updateError) {
       console.error("Update error:", updateError);
     }
 
-    // If payment succeeded and linked to an order, mark order completed
+    if (!payment) {
+      // Already processed or unknown — ignore silently
+      return new Response(JSON.stringify({ success: true, ignored: true }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (status === "completed" && payment?.order_id) {
       await supabase
         .from("orders")
