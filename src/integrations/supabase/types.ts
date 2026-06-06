@@ -201,6 +201,7 @@ export type Database = {
         Row: {
           amount_paid: number
           created_at: string
+          customer_id: string | null
           customer_name: string
           due_date: string | null
           id: string
@@ -217,6 +218,7 @@ export type Database = {
         Insert: {
           amount_paid?: number
           created_at?: string
+          customer_id?: string | null
           customer_name: string
           due_date?: string | null
           id?: string
@@ -233,6 +235,7 @@ export type Database = {
         Update: {
           amount_paid?: number
           created_at?: string
+          customer_id?: string | null
           customer_name?: string
           due_date?: string | null
           id?: string
@@ -247,6 +250,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "credit_sales_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "credit_sales_sale_id_fkey"
             columns: ["sale_id"]

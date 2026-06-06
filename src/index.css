@@ -148,3 +148,49 @@
 .dark ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground));
 }
+
+/* Safe area for mobile bottom nav */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Mobile: prevent zoom on form inputs (iOS) */
+@media (max-width: 768px) {
+  input[type="text"], input[type="number"], input[type="email"],
+  input[type="tel"], input[type="password"], input[type="search"],
+  select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Print: show ONLY the receipt, hide everything else */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  .print-receipt, .print-receipt * {
+    visibility: visible !important;
+  }
+  .print-receipt {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 80mm !important;
+    margin: 0 !important;
+    padding: 8px !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: white !important;
+    color: black !important;
+  }
+  .print-receipt * {
+    color: black !important;
+    background: transparent !important;
+    border-color: #999 !important;
+  }
+  @page {
+    margin: 5mm;
+    size: 80mm auto;
+  }
+}

@@ -14,7 +14,7 @@ import {
   Wifi, WifiOff, Check, ArrowLeft, CreditCard, Printer, MessageCircle, Percent,
 } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
-import { addToOfflineQueue, isOnline, syncOfflineSales, getOfflineQueue, type OfflineSale } from "@/lib/offlineSync";
+import { addToOfflineQueue, isOnline, isReachable, syncOfflineSales, getOfflineQueue, type OfflineSale } from "@/lib/offlineSync";
 
 interface CartItem {
   product_id: string;
@@ -58,12 +58,28 @@ export default function POS() {
   const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const onOnline = () => { setOnline(true); syncOfflineSales().then(() => setPendingCount(getOfflineQueue().length)); };
+    const recheck = async () => {
+      const ok = await isReachable();
+      setOnline(ok);
+      if (ok) {
+        const r = await syncOfflineSales();
+        setPendingCount(getOfflineQueue().length);
+        if (r.synced > 0) toast({ title: `Synced ${r.synced} offline sale${r.synced > 1 ? "s" : ""}` });
+      }
+    };
+    const onOnline = () => { recheck(); };
     const onOffline = () => setOnline(false);
     window.addEventListener("online", onOnline);
     window.addEventListener("offline", onOffline);
-    return () => { window.removeEventListener("online", onOnline); window.removeEventListener("offline", onOffline); };
-  }, []);
+    // Periodic reachability check (covers wifi <-> mobile data transitions silently)
+    const interval = setInterval(recheck, 30000);
+    recheck();
+    return () => {
+      window.removeEventListener("online", onOnline);
+      window.removeEventListener("offline", onOffline);
+      clearInterval(interval);
+    };
+  }, [toast]);
 
   const { data: products = [] } = useQuery({
     queryKey: ["pos_products", currentOrg?.id],
@@ -261,8 +277,37 @@ export default function POS() {
         );
 
         if (isCredit) {
+          // Auto-create/find customer record in customers table
+          let linkedCustomerId: string | null = null;
+          try {
+            const { data: existing } = await supabase
+              .from("customers")
+              .select("id")
+              .eq("organization_id", saleData.organization_id)
+              .ilike("name", creditName.trim())
+              .maybeSingle();
+            if (existing?.id) {
+              linkedCustomerId = existing.id;
+              if (customerPhone) {
+                await supabase.from("customers").update({ phone: customerPhone } as any).eq("id", existing.id);
+              }
+            } else {
+              const { data: created } = await supabase
+                .from("customers")
+                .insert({
+                  organization_id: saleData.organization_id,
+                  name: creditName.trim(),
+                  phone: customerPhone || null,
+                } as any)
+                .select("id")
+                .single();
+              linkedCustomerId = created?.id || null;
+            }
+          } catch { /* non-fatal */ }
+
           await supabase.from("credit_sales").insert({
             organization_id: saleData.organization_id,
+            customer_id: linkedCustomerId,
             customer_name: creditName.trim(),
             phone: customerPhone || null,
             total_amount: cartTotal,
@@ -373,7 +418,7 @@ export default function POS() {
           </div>
 
           {/* Receipt (printable) */}
-          <Card className="print:shadow-none print:border-none">
+          <Card className="print-receipt print:shadow-none print:border-none">
             <CardContent className="p-4 text-sm font-mono">
               <div className="text-center font-bold">{currentOrg?.name}</div>
               <div className="text-center text-xs text-muted-foreground mb-2">Ref {lastSale.ref} · {new Date().toLocaleString()}</div>

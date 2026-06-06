@@ -1,0 +1,2 @@
+ALTER TABLE public.credit_sales ADD COLUMN IF NOT EXISTS customer_id UUID REFERENCES public.customers(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_credit_sales_customer_id ON public.credit_sales(customer_id);
