@@ -183,7 +183,7 @@ export default function DailySummary() {
             {summary.recentSales.length > 0 && (
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-base">Recent Sales</CardTitle>
+                  <CardTitle className="text-base">{isToday ? "Recent Sales" : "Sales on this day"}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
                   {summary.recentSales.map((sale: any) => (
