@@ -6,7 +6,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.100.0";
 
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -15,14 +15,27 @@ Deno.serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
+    if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    // User-scoped client to verify JWT and apply RLS
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const userId = claimsData.claims.sub;
 
     const { title, description, organization_id } = await req.json();
     if (!title || !organization_id) {
@@ -32,7 +45,21 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Get org context: existing tasks, members
+    // Verify org membership
+    const { data: membership } = await supabase
+      .from("organization_members")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("organization_id", organization_id)
+      .maybeSingle();
+    if (!membership) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Use the user-scoped client (RLS applies) for org data reads
     const [tasksRes, membersRes] = await Promise.all([
       supabase
         .from("tasks")
@@ -49,7 +76,6 @@ Deno.serve(async (req) => {
     const existingTasks = tasksRes.data || [];
     const members = membersRes.data || [];
 
-    // Get member profiles
     const memberIds = members.map((m: any) => m.user_id);
     const profilesRes = await supabase
       .from("profiles")
@@ -118,7 +144,6 @@ Respond with a JSON object (no markdown, just raw JSON):
     const aiData = await aiResponse.json();
     const content = aiData.choices?.[0]?.message?.content || "";
 
-    // Parse JSON from response (handle potential markdown wrapping)
     let recommendations;
     try {
       const jsonMatch = content.match(/\{[\s\S]*\}/);
@@ -136,7 +161,6 @@ Respond with a JSON object (no markdown, just raw JSON):
       };
     }
 
-    // Enrich with member name
     if (recommendations.suggested_assignee_id) {
       const assignee = memberInfo.find((m: any) => m.user_id === recommendations.suggested_assignee_id);
       recommendations.suggested_assignee_name = assignee?.name || "Unknown";
@@ -146,8 +170,8 @@ Respond with a JSON object (no markdown, just raw JSON):
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Error:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error("ai-task-recommendations error:", error);
+    return new Response(JSON.stringify({ error: "An internal error occurred" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
