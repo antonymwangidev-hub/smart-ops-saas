@@ -277,8 +277,37 @@ export default function POS() {
         );
 
         if (isCredit) {
+          // Auto-create/find customer record in customers table
+          let linkedCustomerId: string | null = null;
+          try {
+            const { data: existing } = await supabase
+              .from("customers")
+              .select("id")
+              .eq("organization_id", saleData.organization_id)
+              .ilike("name", creditName.trim())
+              .maybeSingle();
+            if (existing?.id) {
+              linkedCustomerId = existing.id;
+              if (customerPhone) {
+                await supabase.from("customers").update({ phone: customerPhone } as any).eq("id", existing.id);
+              }
+            } else {
+              const { data: created } = await supabase
+                .from("customers")
+                .insert({
+                  organization_id: saleData.organization_id,
+                  name: creditName.trim(),
+                  phone: customerPhone || null,
+                } as any)
+                .select("id")
+                .single();
+              linkedCustomerId = created?.id || null;
+            }
+          } catch { /* non-fatal */ }
+
           await supabase.from("credit_sales").insert({
             organization_id: saleData.organization_id,
+            customer_id: linkedCustomerId,
             customer_name: creditName.trim(),
             phone: customerPhone || null,
             total_amount: cartTotal,
