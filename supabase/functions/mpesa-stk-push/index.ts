@@ -89,8 +89,12 @@ Deno.serve(async (req) => {
     const password = btoa(`${SHORTCODE}${PASSKEY}${timestamp}`);
     const token = await getMpesaToken();
 
-    // Get the callback URL
-    const callbackUrl = `${supabaseUrl}/functions/v1/mpesa-callback`;
+    // Get the callback URL (include shared secret if configured)
+    const callbackSecret = Deno.env.get("MPESA_CALLBACK_SECRET");
+    const callbackUrl = callbackSecret
+      ? `${supabaseUrl}/functions/v1/mpesa-callback?secret=${encodeURIComponent(callbackSecret)}`
+      : `${supabaseUrl}/functions/v1/mpesa-callback`;
+
 
     const stkPayload = {
       BusinessShortCode: SHORTCODE,
