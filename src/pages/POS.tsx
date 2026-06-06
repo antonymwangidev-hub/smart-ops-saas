@@ -14,7 +14,7 @@ import {
   Wifi, WifiOff, Check, ArrowLeft, CreditCard, Printer, MessageCircle, Percent,
 } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
-import { addToOfflineQueue, isOnline, syncOfflineSales, getOfflineQueue, type OfflineSale } from "@/lib/offlineSync";
+import { addToOfflineQueue, isOnline, isReachable, syncOfflineSales, getOfflineQueue, type OfflineSale } from "@/lib/offlineSync";
 
 interface CartItem {
   product_id: string;
