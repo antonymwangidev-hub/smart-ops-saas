@@ -97,7 +97,27 @@ export async function syncOfflineSales(): Promise<{ synced: number; failed: numb
 }
 
 export function isOnline(): boolean {
-  return navigator.onLine;
+  return typeof navigator === "undefined" ? true : navigator.onLine;
+}
+
+/**
+ * Real reachability probe — works for BOTH Wi-Fi and mobile data.
+ * Only returns false when the device has no working internet on any radio.
+ */
+export async function isReachable(timeoutMs = 4000): Promise<boolean> {
+  if (!isOnline()) return false;
+  try {
+    const controller = new AbortController();
+    const t = setTimeout(() => controller.abort(), timeoutMs);
+    // Hit the Supabase REST root — tiny, no auth needed for the OPTIONS/HEAD response
+    const url = (import.meta as any).env?.VITE_SUPABASE_URL;
+    if (!url) return true;
+    await fetch(`${url}/auth/v1/health`, { method: "GET", signal: controller.signal, cache: "no-store" });
+    clearTimeout(t);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 // Auto-sync when coming back online
