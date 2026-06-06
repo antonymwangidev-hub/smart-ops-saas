@@ -153,10 +153,10 @@ Deno.serve(async (req) => {
     );
   } catch (error: unknown) {
     console.error("M-Pesa STK push error:", error);
-    const msg = error instanceof Error ? error.message : "Unknown error";
     return new Response(
-      JSON.stringify({ success: false, error: msg }),
+      JSON.stringify({ success: false, error: "Payment request failed" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
+
