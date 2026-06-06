@@ -58,12 +58,28 @@ export default function POS() {
   const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const onOnline = () => { setOnline(true); syncOfflineSales().then(() => setPendingCount(getOfflineQueue().length)); };
+    const recheck = async () => {
+      const ok = await isReachable();
+      setOnline(ok);
+      if (ok) {
+        const r = await syncOfflineSales();
+        setPendingCount(getOfflineQueue().length);
+        if (r.synced > 0) toast({ title: `Synced ${r.synced} offline sale${r.synced > 1 ? "s" : ""}` });
+      }
+    };
+    const onOnline = () => { recheck(); };
     const onOffline = () => setOnline(false);
     window.addEventListener("online", onOnline);
     window.addEventListener("offline", onOffline);
-    return () => { window.removeEventListener("online", onOnline); window.removeEventListener("offline", onOffline); };
-  }, []);
+    // Periodic reachability check (covers wifi <-> mobile data transitions silently)
+    const interval = setInterval(recheck, 30000);
+    recheck();
+    return () => {
+      window.removeEventListener("online", onOnline);
+      window.removeEventListener("offline", onOffline);
+      clearInterval(interval);
+    };
+  }, [toast]);
 
   const { data: products = [] } = useQuery({
     queryKey: ["pos_products", currentOrg?.id],
