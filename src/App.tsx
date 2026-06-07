@@ -80,7 +80,7 @@ const App = () => (
               <Route path="/notifications" element={<PrivateRoute><RoleRoute requiredRole="staff"><Notifications /></RoleRoute></PrivateRoute>} />
               <Route path="/settings" element={<PrivateRoute><RoleRoute requiredRole="staff"><AppSettings /></RoleRoute></PrivateRoute>} />
               {/* Admin-only routes */}
-              <Route path="/staff" element={<PrivateRoute><RoleRoute requiredRole="admin"><StaffManagement /></RoleRoute></PrivateRoute>} />
+              <Route path="/staff" element={<PrivateRoute><RoleRoute requiredRole="manager"><StaffManagement /></RoleRoute></PrivateRoute>} />
               <Route path="/branches" element={<PrivateRoute><RoleRoute requiredRole="admin"><Branches /></RoleRoute></PrivateRoute>} />
               <Route path="/stock-transfers" element={<PrivateRoute><RoleRoute requiredRole="staff"><StockTransfers /></RoleRoute></PrivateRoute>} />
               <Route path="/attendance" element={<PrivateRoute><Attendance /></PrivateRoute>} />
