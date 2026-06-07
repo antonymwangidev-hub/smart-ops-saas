@@ -1,81 +1,82 @@
-# Staff Invitation & RBAC Upgrade
 
-Build a complete invitation-based onboarding flow on top of the existing org/role system, without breaking current logins or the `organization_members.role` enum already wired into RLS.
+# SmartOps → Business Operating System: Phased Roadmap
 
-## Approach
+I analyzed the current codebase against your brief. Here's what exists, what's missing, and the phased plan. We'll execute one phase per turn — you approve, I ship, we move to the next.
 
-Keep the existing `organization_members` table + `app_role` enum as the source of truth for org membership/role (everything in RLS already depends on it). Layer on:
-- **Invitations table** for the pending → accepted lifecycle.
-- **Permissions catalog** (`permissions`, `role_permissions`) keyed by `app_role` for fine-grained UI/route gating, with optional custom roles later.
-- **Edge functions** for secure invite send + accept (uses service-role to create the auth user + membership atomically).
-- **Email** via Lovable's built-in transactional email (scaffold if not present).
+## Current State (audit)
 
-## Database (migration)
+**Already built (keep & extend):**
+- Multi-tenant orgs with RLS (`organizations`, `organization_members`, `has_org_role`, `get_user_org_ids`)
+- Roles: admin / staff / attendant + `RoleRoute`
+- POS (`/pos`), Daily Summary, Credit Sales, Products w/ stock + low-stock threshold
+- Orders + order_items, Customers, Tasks, Automations engine (`process_automations`)
+- M-Pesa STK Push + callback edge functions, `mpesa_payments` table
+- AI assistant, AI recommendations, business-health edge function, activity_logs + realtime
+- Notifications, presence, file attachments, currency context (KES default), offline sync skeleton, platform admin
+- Phone OTP auth + profile phone management
 
-1. `staff_invitations`
-   - `id, organization_id, email, full_name, phone, role app_role, branch_id, token (unique), invited_by, status (pending|accepted|revoked|expired), expires_at (now()+7d), accepted_at, accepted_user_id, created_at, updated_at`
-   - RLS: org admins/managers can select/insert/update; public can SELECT a single row by token via SECURITY DEFINER RPC only (no direct anon read).
-2. `permissions(key text pk, description text, category text)` — seed with the keys listed by user.
-3. `role_permissions(role app_role, permission_key text, PRIMARY KEY(role, permission_key))` — seed defaults per role.
-4. Extend `organization_members` with `status text default 'active'` (`active|suspended|pending_invitation`) and `branch_id uuid`.
-5. RPCs (SECURITY DEFINER):
-   - `get_invitation_by_token(_token text)` → returns org name, role, email, status, expires_at (no auth required).
-   - `accept_invitation(_token text)` → links `auth.uid()` to the invitation's org/role/branch, marks accepted, requires the JWT email to match.
-   - `user_permissions(_user_id uuid, _org_id uuid)` → returns set of permission keys for that user's role.
+**Gaps vs brief:**
+- No suppliers, purchase orders, expenses, branches, product categories/brands/variants/batches/expiry
+- No proper finance (P&L, cash flow), no reporting center w/ PDF/Excel export
+- No CRM depth (loyalty, lifetime value), no debtor reminders (SMS/WhatsApp)
+- No subscription/billing plans, no usage limits
+- No barcode scan, receipt printing, WhatsApp receipt, returns/refunds
+- No staff attendance, no eTIMS scaffolding, no 2FA
+- POS lacks mixed payments, discounts, tax, refunds
 
-## Edge functions
+## Phased Plan (ranked by business impact)
 
-- `invite-staff` (JWT-verified): admin/manager only → creates invitation row + token, sends email via `send-transactional-email`. Idempotent per `(org, email, pending)`.
-- `resend-invitation` (JWT): regenerates token + resends email.
-- Email template: `staff-invitation.tsx` registered in transactional registry. Link: `${SITE_URL}/invite/{token}`.
+### Phase 1 — Inventory & POS 2.0 (HIGH IMPACT, foundational)
+- Add `product_categories`, `product_brands`, extend `products` with: `barcode`, `unit_of_measure`, `batch_number`, `expiry_date`, `brand_id`, `category_id`, `tax_rate`
+- POS upgrades: barcode/scan input, product search by name/SKU/barcode, line-item discounts, tax calc, mixed payments (cash + M-Pesa + credit split), receipt print view, WhatsApp receipt link (`wa.me`)
+- Returns/refunds: new `sale_returns` + `sale_return_items` tables, refund flow in POS
+- Stock intelligence view: fast/slow/dead/overstocked/expiring panels on Products page
 
-## Frontend
+### Phase 2 — Suppliers & Purchase Orders
+- Tables: `suppliers`, `purchase_orders` (draft/approved/ordered/received), `purchase_order_items`, `supplier_payments`
+- Pages: `/suppliers`, `/purchases` with PO workflow, auto-increment stock on "received"
+- Supplier outstanding balance, purchase history, best-price tracking
 
-- `src/hooks/usePermissions.ts` — loads permission keys for current user/org from RPC, exposes `has(key)`.
-- `src/components/PermissionGate.tsx` — wraps menu items / sections.
-- Update `RoleRoute` to optionally accept `requiredPermission` and check via `usePermissions`.
-- Update `AppSidebar` to filter by permissions (keep role-level fallback).
-- `src/pages/InviteAccept.tsx` (public route `/invite/:token`):
-   - Reads invite via RPC.
-   - If signed-out & no auth user with that email: show signup form (email pre-filled, locked) → `supabase.auth.signUp` with redirect → on session → call `accept_invitation` RPC.
-   - If signed-in with matching email: just call `accept_invitation`.
-   - On success: toast + redirect to `/pos`.
-- Update `StaffManagement.tsx`:
-   - Add "Invite Staff" dialog (name/email/phone/role/branch).
-   - Table columns Name / Email / Role / Branch / Status with badges + actions (Resend, Edit Role, Change Branch, Suspend, Reactivate).
-   - Top stats: Active / Pending / Suspended counts.
-- Add `/invite/:token` route in `App.tsx` (outside `PrivateRoute`).
+### Phase 3 — Finance & Debtor Control
+- Tables: `expenses` (category, amount, date, recurring), `expense_categories`
+- Strengthen `credit_sales` with `due_date`, `payment_history` (`credit_payments` table)
+- Debtor dashboard: aging buckets, risk score, one-click SMS/WhatsApp reminder edge function (Africa's Talking + Twilio already documented)
+- Finance pages: P&L, Cash Flow, Expense report
+- Dashboard widgets: Today's profit, expenses, outstanding debt, AI insights expansion
 
-## Permission seed (defaults)
+### Phase 4 — Multi-Branch & Staff Operations
+- Tables: `branches`, add `branch_id` to products/sales/staff assignments, `stock_transfers`, `staff_attendance`
+- Branch switcher in header (like org switcher), consolidated vs per-branch reports
+- Expanded roles: `manager`, `cashier`, `storekeeper`, `accountant` (extend `app_role` enum), per-module permissions table
+- Staff attendance clock-in/out page
 
-- Owner/admin: all keys.
-- Manager: dashboard, inventory.*, sales.*, reports.view, staff.view, customers.*.
-- Cashier: dashboard.view, sales.view, sales.create, customers.view.
-- Inventory clerk → mapped to `storekeeper`: dashboard.view, inventory.*, suppliers.*, purchases.*.
+### Phase 5 — Reporting Center & CRM Depth
+- `/reports` hub: sales (daily/weekly/monthly), inventory valuation & movement, financial, customer reports
+- PDF (jsPDF) + Excel (xlsx) + CSV exports (csvExport already exists)
+- CRM: customer lifetime value, loyalty points table (`loyalty_transactions`), coupons
+- Communication history per customer
 
-## Non-goals (kept compatible)
+### Phase 6 — SaaS Billing, eTIMS Scaffold, Security
+- Tables: `subscription_plans`, `org_subscriptions`, usage tracking (users/branches/products counts)
+- Plan gates in app (Free/Starter/Business/Enterprise), Paystack edge function for billing
+- eTIMS-ready invoice schema: KRA PIN on business profile, VAT-compliant invoice numbering, `tax_invoices` table — integration stubbed
+- 2FA (TOTP via Supabase MFA), audit log viewer for owners
 
-- Don't change existing `app_role` enum values or RLS policies that depend on them.
-- Don't replace `organization_members` — invitation accept inserts into it.
-- Auth still uses Supabase Auth email/password; we just bootstrap via invitation token.
+### Phase 7 — Polish: Mobile, AI Assistant Upgrade, Notifications
+- Mobile nav expansion per new modules, swipe gestures on POS cart
+- AI assistant: tool-calling against real org data (top products, debtors, reorder suggestions, branch comparison)
+- Unified notification center page with filters
 
-## Files
+## Technical Notes
+- Every new public table: CREATE → GRANT (authenticated + service_role) → ENABLE RLS → POLICIES scoped via `get_user_org_ids(auth.uid())` and `has_org_role`
+- Extend `app_role` enum additively (manager/cashier/storekeeper/accountant) — keep admin/staff/attendant working
+- All new pages wrapped in `PrivateRoute` + `RoleRoute` with the minimum role
+- Reuse existing `AppLayout`, design tokens, `glass` cards, Indigo/Emerald palette
+- M-Pesa/Twilio/Africa's Talking via existing edge functions & secrets
 
-**Created**
-- `supabase/migrations/<ts>_staff_invitations_rbac.sql`
-- `supabase/functions/invite-staff/index.ts`
-- `supabase/functions/resend-invitation/index.ts`
-- `supabase/functions/_shared/transactional-email-templates/staff-invitation.tsx`
-- `src/pages/InviteAccept.tsx`
-- `src/hooks/usePermissions.ts`
-- `src/components/PermissionGate.tsx`
+## Deliverable per phase
+Migration(s) + UI pages + edge functions (where needed) + sidebar entries. Backward compatible — no existing route or feature removed.
 
-**Edited**
-- `src/App.tsx` (add `/invite/:token`)
-- `src/components/RoleRoute.tsx` (permission support)
-- `src/components/AppSidebar.tsx` (permission filtering)
-- `src/pages/StaffManagement.tsx` (invite UI + status/actions + stats)
-- `supabase/functions/_shared/transactional-email-templates/registry.ts` (register template)
-- `supabase/config.toml` (register new functions if needed)
+---
 
-Reply **go** to build, or tell me which parts to trim.
+**Reply approve to start Phase 1 (Inventory & POS 2.0)**, or tell me to reorder/cut phases.
