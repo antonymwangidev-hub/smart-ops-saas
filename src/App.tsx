@@ -38,6 +38,7 @@ import Documents from "./pages/Documents";
 import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
 import PlatformAdmin from "./pages/PlatformAdmin";
+import InviteAccept from "./pages/InviteAccept";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +57,7 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/invite/:token" element={<InviteAccept />} />
               {/* POS — all roles */}
               <Route path="/pos" element={<PrivateRoute><POS /></PrivateRoute>} />
               <Route path="/daily-summary" element={<PrivateRoute><DailySummary /></PrivateRoute>} />
@@ -78,7 +80,7 @@ const App = () => (
               <Route path="/notifications" element={<PrivateRoute><RoleRoute requiredRole="staff"><Notifications /></RoleRoute></PrivateRoute>} />
               <Route path="/settings" element={<PrivateRoute><RoleRoute requiredRole="staff"><AppSettings /></RoleRoute></PrivateRoute>} />
               {/* Admin-only routes */}
-              <Route path="/staff" element={<PrivateRoute><RoleRoute requiredRole="admin"><StaffManagement /></RoleRoute></PrivateRoute>} />
+              <Route path="/staff" element={<PrivateRoute><RoleRoute requiredRole="manager"><StaffManagement /></RoleRoute></PrivateRoute>} />
               <Route path="/branches" element={<PrivateRoute><RoleRoute requiredRole="admin"><Branches /></RoleRoute></PrivateRoute>} />
               <Route path="/stock-transfers" element={<PrivateRoute><RoleRoute requiredRole="staff"><StockTransfers /></RoleRoute></PrivateRoute>} />
               <Route path="/attendance" element={<PrivateRoute><Attendance /></PrivateRoute>} />
