@@ -38,6 +38,7 @@ import Documents from "./pages/Documents";
 import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
 import PlatformAdmin from "./pages/PlatformAdmin";
+import InviteAccept from "./pages/InviteAccept";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +57,7 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/invite/:token" element={<InviteAccept />} />
               {/* POS — all roles */}
               <Route path="/pos" element={<PrivateRoute><POS /></PrivateRoute>} />
               <Route path="/daily-summary" element={<PrivateRoute><DailySummary /></PrivateRoute>} />
