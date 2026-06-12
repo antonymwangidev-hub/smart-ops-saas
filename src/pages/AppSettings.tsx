@@ -38,14 +38,12 @@ export default function AppSettings() {
   const [mpesaType, setMpesaType] = useState<"paybill" | "till">("paybill");
   const [mpesaAccountRef, setMpesaAccountRef] = useState("");
   const [savingMpesa, setSavingMpesa] = useState(false);
-  // Hydrate when org loads
-  useState(() => { /* noop placeholder */ });
-  if (orgRow && mpesaShortcode === "" && (orgRow.mpesa_shortcode || orgRow.mpesa_account_reference)) {
-    // one-time hydration
+  useEffect(() => {
+    if (!orgRow) return;
     setMpesaShortcode(orgRow.mpesa_shortcode || "");
     setMpesaType((orgRow.mpesa_shortcode_type as any) || "paybill");
     setMpesaAccountRef(orgRow.mpesa_account_reference || "");
-  }
+  }, [orgRow]);
 
   const handleSaveMpesa = async () => {
     if (!currentOrg) return;
