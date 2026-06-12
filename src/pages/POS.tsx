@@ -48,6 +48,8 @@ export default function POS() {
   const [customerPhone, setCustomerPhone] = useState("");
   const [orderDiscount, setOrderDiscount] = useState(""); // flat amount off whole sale
   const [submitting, setSubmitting] = useState(false);
+  const [mpesaState, setMpesaState] = useState<"idle" | "sending" | "waiting" | "confirmed" | "failed">("idle");
+  const [mpesaCheckoutId, setMpesaCheckoutId] = useState<string | null>(null);
   const [lastSale, setLastSale] = useState<{
     total: number; subtotal: number; tax: number; discount: number;
     change: number; method: PaymentMethod; items: CartItem[]; phone: string;
