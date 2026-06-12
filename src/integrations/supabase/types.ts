@@ -723,18 +723,27 @@ export type Database = {
           created_at: string
           id: string
           is_active: boolean
+          mpesa_account_reference: string | null
+          mpesa_shortcode: string | null
+          mpesa_shortcode_type: string
           name: string
         }
         Insert: {
           created_at?: string
           id?: string
           is_active?: boolean
+          mpesa_account_reference?: string | null
+          mpesa_shortcode?: string | null
+          mpesa_shortcode_type?: string
           name: string
         }
         Update: {
           created_at?: string
           id?: string
           is_active?: boolean
+          mpesa_account_reference?: string | null
+          mpesa_shortcode?: string | null
+          mpesa_shortcode_type?: string
           name?: string
         }
         Relationships: []
