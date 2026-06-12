@@ -358,7 +358,59 @@ export default function POS() {
     setCustomerPhone("");
     setOrderDiscount("");
     setLastSale(null);
+    setMpesaState("idle");
+    setMpesaCheckoutId(null);
   };
+
+  // Trigger M-Pesa STK push, then wait for callback via realtime
+  const triggerMpesaSTK = async () => {
+    if (!customerPhone.trim()) {
+      toast({ title: "Enter customer phone", description: "M-Pesa needs the payer's number", variant: "destructive" });
+      return;
+    }
+    if (!currentOrg) return;
+    setMpesaState("sending");
+    try {
+      const { data, error } = await supabase.functions.invoke("mpesa-stk-push", {
+        body: { phone: customerPhone, amount: cartTotal, organization_id: currentOrg.id },
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || "STK push failed");
+      setMpesaCheckoutId(data.checkout_request_id);
+      setMpesaState("waiting");
+      toast({ title: "STK push sent", description: `Prompt sent to ${customerPhone}` });
+    } catch (err: any) {
+      setMpesaState("failed");
+      toast({ title: "M-Pesa failed", description: err?.message || "Could not send prompt", variant: "destructive" });
+    }
+  };
+
+  // Poll mpesa_payments while waiting (realtime is excluded for this table per security memo)
+  useEffect(() => {
+    if (mpesaState !== "waiting" || !mpesaCheckoutId) return;
+    let cancelled = false;
+    const poll = async () => {
+      const { data } = await supabase
+        .from("mpesa_payments")
+        .select("status, result_desc")
+        .eq("checkout_request_id", mpesaCheckoutId)
+        .maybeSingle();
+      if (cancelled) return;
+      if ((data as any)?.status === "completed") {
+        setMpesaState("confirmed");
+        toast({ title: "Payment received", description: "M-Pesa confirmed" });
+      } else if ((data as any)?.status === "failed") {
+        setMpesaState("failed");
+        toast({ title: "Payment failed", description: (data as any)?.result_desc || "Customer declined", variant: "destructive" });
+      }
+    };
+    const id = setInterval(poll, 3000);
+    poll();
+    // safety timeout after 90s
+    const stop = setTimeout(() => { if (!cancelled) clearInterval(id); }, 90000);
+    return () => { cancelled = true; clearInterval(id); clearTimeout(stop); };
+  }, [mpesaState, mpesaCheckoutId, toast]);
+
 
   const buildReceiptText = (s: typeof lastSale) => {
     if (!s) return "";
