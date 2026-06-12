@@ -575,9 +575,31 @@ export default function POS() {
 
           {!isCredit && paymentMethod === "mpesa" && (
             <Card className="bg-success/5 border-success/20">
-              <CardContent className="p-4 text-center">
-                <p className="text-sm text-muted-foreground">Confirm M-Pesa payment received</p>
-                <p className="text-lg font-semibold text-foreground mt-1">{formatAmount(cartTotal)}</p>
+              <CardContent className="p-4 text-center space-y-3">
+                <div>
+                  <p className="text-sm text-muted-foreground">Amount due</p>
+                  <p className="text-2xl font-bold text-foreground">{formatAmount(cartTotal)}</p>
+                </div>
+                {mpesaState === "idle" && (
+                  <Button onClick={triggerMpesaSTK} className="w-full h-12 gap-2" disabled={!customerPhone.trim() || !online}>
+                    <Smartphone className="h-4 w-4" /> Send STK Push to {customerPhone || "phone"}
+                  </Button>
+                )}
+                {mpesaState === "sending" && <p className="text-sm">Sending prompt…</p>}
+                {mpesaState === "waiting" && (
+                  <>
+                    <p className="text-sm text-warning">⏳ Waiting for customer to enter PIN…</p>
+                    <Button variant="outline" size="sm" onClick={triggerMpesaSTK}>Resend prompt</Button>
+                  </>
+                )}
+                {mpesaState === "confirmed" && <p className="text-sm text-success font-semibold">✓ Payment confirmed</p>}
+                {mpesaState === "failed" && (
+                  <>
+                    <p className="text-sm text-destructive">Payment failed or declined</p>
+                    <Button variant="outline" size="sm" onClick={triggerMpesaSTK}>Try again</Button>
+                  </>
+                )}
+                {!online && <p className="text-xs text-muted-foreground">Offline — M-Pesa STK requires internet</p>}
               </CardContent>
             </Card>
           )}
@@ -596,7 +618,8 @@ export default function POS() {
             onClick={completeSale}
             disabled={submitting ||
               (!isCredit && paymentMethod === "cash" && (parseFloat(cashReceived) || 0) < cartTotal) ||
-              (!isCredit && paymentMethod === "mixed" && ((parseFloat(cashReceived) || 0) + (parseFloat(mpesaAmount) || 0)) < cartTotal)
+              (!isCredit && paymentMethod === "mixed" && ((parseFloat(cashReceived) || 0) + (parseFloat(mpesaAmount) || 0)) < cartTotal) ||
+              (!isCredit && paymentMethod === "mpesa" && online && mpesaState !== "confirmed")
             }
             size="lg"
             className="w-full h-16 text-xl"
