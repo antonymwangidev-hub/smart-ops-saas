@@ -7,9 +7,11 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const MPESA_BASE_URL = "https://sandbox.safaricom.co.ke"; // Change to https://api.safaricom.co.ke for production
-const SHORTCODE = "174379";
-const PASSKEY = "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"; // Sandbox default passkey
+const MPESA_BASE_URL = Deno.env.get("MPESA_ENV") === "production"
+  ? "https://api.safaricom.co.ke"
+  : "https://sandbox.safaricom.co.ke";
+const DEFAULT_SHORTCODE = "174379";
+const DEFAULT_PASSKEY = "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"; // Sandbox default passkey
 
 async function getMpesaToken(): Promise<string> {
   const consumerKey = Deno.env.get("MPESA_CONSUMER_KEY");
@@ -84,30 +86,38 @@ Deno.serve(async (req) => {
       formattedPhone = `254${formattedPhone}`;
     }
 
+    // Load per-org M-Pesa config (falls back to sandbox defaults)
+    const { data: org } = await supabase
+      .from("organizations")
+      .select("mpesa_shortcode, mpesa_shortcode_type, mpesa_account_reference, name")
+      .eq("id", organization_id)
+      .maybeSingle();
+
+    const SHORTCODE = (org?.mpesa_shortcode || DEFAULT_SHORTCODE).toString().trim();
+    const SHORTCODE_TYPE = (org?.mpesa_shortcode_type || "paybill").toString();
+    const PASSKEY = Deno.env.get("MPESA_PASSKEY") || DEFAULT_PASSKEY;
 
     const timestamp = getTimestamp();
     const password = btoa(`${SHORTCODE}${PASSKEY}${timestamp}`);
     const token = await getMpesaToken();
 
-    // Get the callback URL (include shared secret if configured)
     const callbackSecret = Deno.env.get("MPESA_CALLBACK_SECRET");
     const callbackUrl = callbackSecret
       ? `${supabaseUrl}/functions/v1/mpesa-callback?secret=${encodeURIComponent(callbackSecret)}`
       : `${supabaseUrl}/functions/v1/mpesa-callback`;
 
-
     const stkPayload = {
       BusinessShortCode: SHORTCODE,
       Password: password,
       Timestamp: timestamp,
-      TransactionType: "CustomerPayBillOnline",
+      TransactionType: SHORTCODE_TYPE === "till" ? "CustomerBuyGoodsOnline" : "CustomerPayBillOnline",
       Amount: Math.ceil(Number(amount)),
       PartyA: formattedPhone,
       PartyB: SHORTCODE,
       PhoneNumber: formattedPhone,
       CallBackURL: callbackUrl,
-      AccountReference: order_id ? `Order-${order_id.slice(0, 8)}` : "Payment",
-      TransactionDesc: "Payment via SmartOps",
+      AccountReference: org?.mpesa_account_reference || (order_id ? `Order-${order_id.slice(0, 8)}` : (org?.name || "Payment")).slice(0, 12),
+      TransactionDesc: `Payment to ${org?.name || "SmartOps"}`.slice(0, 20),
     };
 
     const stkRes = await fetch(

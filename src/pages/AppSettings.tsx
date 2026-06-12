@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useOrg } from "@/contexts/OrgContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,10 +9,11 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Moon, Sun, Monitor, Sparkles, Phone } from "lucide-react";
+import { Loader2, Moon, Sun, Monitor, Sparkles, Phone, Smartphone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/components/ThemeProvider";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
+import { useQuery } from "@tanstack/react-query";
 
 export default function AppSettings() {
   const { currentOrg, refreshOrgs } = useOrg();
@@ -22,6 +23,40 @@ export default function AppSettings() {
   const [orgName, setOrgName] = useState(currentOrg?.name || "");
   const [saving, setSaving] = useState(false);
   const { aiEnabled, autoEscalate, loading: prefsLoading, updatePreference } = useUserPreferences();
+
+  // M-Pesa config (per-org)
+  const { data: orgRow, refetch: refetchOrg } = useQuery({
+    queryKey: ["org_full", currentOrg?.id],
+    queryFn: async () => {
+      if (!currentOrg) return null;
+      const { data } = await supabase.from("organizations").select("*").eq("id", currentOrg.id).maybeSingle();
+      return data as any;
+    },
+    enabled: !!currentOrg,
+  });
+  const [mpesaShortcode, setMpesaShortcode] = useState("");
+  const [mpesaType, setMpesaType] = useState<"paybill" | "till">("paybill");
+  const [mpesaAccountRef, setMpesaAccountRef] = useState("");
+  const [savingMpesa, setSavingMpesa] = useState(false);
+  useEffect(() => {
+    if (!orgRow) return;
+    setMpesaShortcode(orgRow.mpesa_shortcode || "");
+    setMpesaType((orgRow.mpesa_shortcode_type as any) || "paybill");
+    setMpesaAccountRef(orgRow.mpesa_account_reference || "");
+  }, [orgRow]);
+
+  const handleSaveMpesa = async () => {
+    if (!currentOrg) return;
+    setSavingMpesa(true);
+    const { error } = await supabase.from("organizations").update({
+      mpesa_shortcode: mpesaShortcode.trim() || null,
+      mpesa_shortcode_type: mpesaType,
+      mpesa_account_reference: mpesaAccountRef.trim() || null,
+    } as any).eq("id", currentOrg.id);
+    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+    else { toast({ title: "M-Pesa settings saved" }); await refetchOrg(); }
+    setSavingMpesa(false);
+  };
 
   const currentPhone = user?.phone || (user?.user_metadata as any)?.phone || "";
   const [newPhone, setNewPhone] = useState("");
@@ -114,6 +149,61 @@ export default function AppSettings() {
             </Button>
           </CardContent>
         </Card>
+
+        <Card className="glass">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Smartphone className="h-5 w-5 text-success" />
+              M-Pesa (Till / Paybill)
+            </CardTitle>
+            <CardDescription>
+              Configure your business M-Pesa shortcode so POS sales push directly to your account.
+              Leave blank to use the SmartOps sandbox (for testing only).
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setMpesaType("paybill")}
+                className={`flex-1 px-3 py-2 rounded-xl border text-sm font-medium transition-all ${mpesaType === "paybill" ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"}`}
+              >Paybill</button>
+              <button
+                type="button"
+                onClick={() => setMpesaType("till")}
+                className={`flex-1 px-3 py-2 rounded-xl border text-sm font-medium transition-all ${mpesaType === "till" ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"}`}
+              >Buy Goods (Till)</button>
+            </div>
+            <div className="space-y-2">
+              <Label>{mpesaType === "till" ? "Till Number" : "Paybill Number"}</Label>
+              <Input
+                inputMode="numeric"
+                value={mpesaShortcode}
+                onChange={(e) => setMpesaShortcode(e.target.value)}
+                placeholder={mpesaType === "till" ? "e.g. 5678901" : "e.g. 247247"}
+                className="rounded-xl"
+              />
+            </div>
+            {mpesaType === "paybill" && (
+              <div className="space-y-2">
+                <Label>Account reference (optional)</Label>
+                <Input
+                  value={mpesaAccountRef}
+                  onChange={(e) => setMpesaAccountRef(e.target.value)}
+                  placeholder="Shown on the M-Pesa prompt (max 12 chars)"
+                  maxLength={12}
+                  className="rounded-xl"
+                />
+              </div>
+            )}
+            <Button onClick={handleSaveMpesa} disabled={savingMpesa} className="rounded-xl">
+              {savingMpesa && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Save M-Pesa Settings
+            </Button>
+          </CardContent>
+        </Card>
+
+
 
         <Card className="glass">
           <CardHeader>

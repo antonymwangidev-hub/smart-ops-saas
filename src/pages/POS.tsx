@@ -48,6 +48,8 @@ export default function POS() {
   const [customerPhone, setCustomerPhone] = useState("");
   const [orderDiscount, setOrderDiscount] = useState(""); // flat amount off whole sale
   const [submitting, setSubmitting] = useState(false);
+  const [mpesaState, setMpesaState] = useState<"idle" | "sending" | "waiting" | "confirmed" | "failed">("idle");
+  const [mpesaCheckoutId, setMpesaCheckoutId] = useState<string | null>(null);
   const [lastSale, setLastSale] = useState<{
     total: number; subtotal: number; tax: number; discount: number;
     change: number; method: PaymentMethod; items: CartItem[]; phone: string;
@@ -356,7 +358,59 @@ export default function POS() {
     setCustomerPhone("");
     setOrderDiscount("");
     setLastSale(null);
+    setMpesaState("idle");
+    setMpesaCheckoutId(null);
   };
+
+  // Trigger M-Pesa STK push, then wait for callback via realtime
+  const triggerMpesaSTK = async () => {
+    if (!customerPhone.trim()) {
+      toast({ title: "Enter customer phone", description: "M-Pesa needs the payer's number", variant: "destructive" });
+      return;
+    }
+    if (!currentOrg) return;
+    setMpesaState("sending");
+    try {
+      const { data, error } = await supabase.functions.invoke("mpesa-stk-push", {
+        body: { phone: customerPhone, amount: cartTotal, organization_id: currentOrg.id },
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || "STK push failed");
+      setMpesaCheckoutId(data.checkout_request_id);
+      setMpesaState("waiting");
+      toast({ title: "STK push sent", description: `Prompt sent to ${customerPhone}` });
+    } catch (err: any) {
+      setMpesaState("failed");
+      toast({ title: "M-Pesa failed", description: err?.message || "Could not send prompt", variant: "destructive" });
+    }
+  };
+
+  // Poll mpesa_payments while waiting (realtime is excluded for this table per security memo)
+  useEffect(() => {
+    if (mpesaState !== "waiting" || !mpesaCheckoutId) return;
+    let cancelled = false;
+    const poll = async () => {
+      const { data } = await supabase
+        .from("mpesa_payments")
+        .select("status, result_desc")
+        .eq("checkout_request_id", mpesaCheckoutId)
+        .maybeSingle();
+      if (cancelled) return;
+      if ((data as any)?.status === "completed") {
+        setMpesaState("confirmed");
+        toast({ title: "Payment received", description: "M-Pesa confirmed" });
+      } else if ((data as any)?.status === "failed") {
+        setMpesaState("failed");
+        toast({ title: "Payment failed", description: (data as any)?.result_desc || "Customer declined", variant: "destructive" });
+      }
+    };
+    const id = setInterval(poll, 3000);
+    poll();
+    // safety timeout after 90s
+    const stop = setTimeout(() => { if (!cancelled) clearInterval(id); }, 90000);
+    return () => { cancelled = true; clearInterval(id); clearTimeout(stop); };
+  }, [mpesaState, mpesaCheckoutId, toast]);
+
 
   const buildReceiptText = (s: typeof lastSale) => {
     if (!s) return "";
@@ -521,9 +575,31 @@ export default function POS() {
 
           {!isCredit && paymentMethod === "mpesa" && (
             <Card className="bg-success/5 border-success/20">
-              <CardContent className="p-4 text-center">
-                <p className="text-sm text-muted-foreground">Confirm M-Pesa payment received</p>
-                <p className="text-lg font-semibold text-foreground mt-1">{formatAmount(cartTotal)}</p>
+              <CardContent className="p-4 text-center space-y-3">
+                <div>
+                  <p className="text-sm text-muted-foreground">Amount due</p>
+                  <p className="text-2xl font-bold text-foreground">{formatAmount(cartTotal)}</p>
+                </div>
+                {mpesaState === "idle" && (
+                  <Button onClick={triggerMpesaSTK} className="w-full h-12 gap-2" disabled={!customerPhone.trim() || !online}>
+                    <Smartphone className="h-4 w-4" /> Send STK Push to {customerPhone || "phone"}
+                  </Button>
+                )}
+                {mpesaState === "sending" && <p className="text-sm">Sending prompt…</p>}
+                {mpesaState === "waiting" && (
+                  <>
+                    <p className="text-sm text-warning">⏳ Waiting for customer to enter PIN…</p>
+                    <Button variant="outline" size="sm" onClick={triggerMpesaSTK}>Resend prompt</Button>
+                  </>
+                )}
+                {mpesaState === "confirmed" && <p className="text-sm text-success font-semibold">✓ Payment confirmed</p>}
+                {mpesaState === "failed" && (
+                  <>
+                    <p className="text-sm text-destructive">Payment failed or declined</p>
+                    <Button variant="outline" size="sm" onClick={triggerMpesaSTK}>Try again</Button>
+                  </>
+                )}
+                {!online && <p className="text-xs text-muted-foreground">Offline — M-Pesa STK requires internet</p>}
               </CardContent>
             </Card>
           )}
@@ -542,7 +618,8 @@ export default function POS() {
             onClick={completeSale}
             disabled={submitting ||
               (!isCredit && paymentMethod === "cash" && (parseFloat(cashReceived) || 0) < cartTotal) ||
-              (!isCredit && paymentMethod === "mixed" && ((parseFloat(cashReceived) || 0) + (parseFloat(mpesaAmount) || 0)) < cartTotal)
+              (!isCredit && paymentMethod === "mixed" && ((parseFloat(cashReceived) || 0) + (parseFloat(mpesaAmount) || 0)) < cartTotal) ||
+              (!isCredit && paymentMethod === "mpesa" && online && mpesaState !== "confirmed")
             }
             size="lg"
             className="w-full h-16 text-xl"
