@@ -9,10 +9,11 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Moon, Sun, Monitor, Sparkles, Phone } from "lucide-react";
+import { Loader2, Moon, Sun, Monitor, Sparkles, Phone, Smartphone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/components/ThemeProvider";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
+import { useQuery } from "@tanstack/react-query";
 
 export default function AppSettings() {
   const { currentOrg, refreshOrgs } = useOrg();
@@ -22,6 +23,42 @@ export default function AppSettings() {
   const [orgName, setOrgName] = useState(currentOrg?.name || "");
   const [saving, setSaving] = useState(false);
   const { aiEnabled, autoEscalate, loading: prefsLoading, updatePreference } = useUserPreferences();
+
+  // M-Pesa config (per-org)
+  const { data: orgRow, refetch: refetchOrg } = useQuery({
+    queryKey: ["org_full", currentOrg?.id],
+    queryFn: async () => {
+      if (!currentOrg) return null;
+      const { data } = await supabase.from("organizations").select("*").eq("id", currentOrg.id).maybeSingle();
+      return data as any;
+    },
+    enabled: !!currentOrg,
+  });
+  const [mpesaShortcode, setMpesaShortcode] = useState("");
+  const [mpesaType, setMpesaType] = useState<"paybill" | "till">("paybill");
+  const [mpesaAccountRef, setMpesaAccountRef] = useState("");
+  const [savingMpesa, setSavingMpesa] = useState(false);
+  // Hydrate when org loads
+  useState(() => { /* noop placeholder */ });
+  if (orgRow && mpesaShortcode === "" && (orgRow.mpesa_shortcode || orgRow.mpesa_account_reference)) {
+    // one-time hydration
+    setMpesaShortcode(orgRow.mpesa_shortcode || "");
+    setMpesaType((orgRow.mpesa_shortcode_type as any) || "paybill");
+    setMpesaAccountRef(orgRow.mpesa_account_reference || "");
+  }
+
+  const handleSaveMpesa = async () => {
+    if (!currentOrg) return;
+    setSavingMpesa(true);
+    const { error } = await supabase.from("organizations").update({
+      mpesa_shortcode: mpesaShortcode.trim() || null,
+      mpesa_shortcode_type: mpesaType,
+      mpesa_account_reference: mpesaAccountRef.trim() || null,
+    } as any).eq("id", currentOrg.id);
+    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+    else { toast({ title: "M-Pesa settings saved" }); await refetchOrg(); }
+    setSavingMpesa(false);
+  };
 
   const currentPhone = user?.phone || (user?.user_metadata as any)?.phone || "";
   const [newPhone, setNewPhone] = useState("");
