@@ -152,6 +152,61 @@ export default function AppSettings() {
 
         <Card className="glass">
           <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Smartphone className="h-5 w-5 text-success" />
+              M-Pesa (Till / Paybill)
+            </CardTitle>
+            <CardDescription>
+              Configure your business M-Pesa shortcode so POS sales push directly to your account.
+              Leave blank to use the SmartOps sandbox (for testing only).
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setMpesaType("paybill")}
+                className={`flex-1 px-3 py-2 rounded-xl border text-sm font-medium transition-all ${mpesaType === "paybill" ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"}`}
+              >Paybill</button>
+              <button
+                type="button"
+                onClick={() => setMpesaType("till")}
+                className={`flex-1 px-3 py-2 rounded-xl border text-sm font-medium transition-all ${mpesaType === "till" ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"}`}
+              >Buy Goods (Till)</button>
+            </div>
+            <div className="space-y-2">
+              <Label>{mpesaType === "till" ? "Till Number" : "Paybill Number"}</Label>
+              <Input
+                inputMode="numeric"
+                value={mpesaShortcode}
+                onChange={(e) => setMpesaShortcode(e.target.value)}
+                placeholder={mpesaType === "till" ? "e.g. 5678901" : "e.g. 247247"}
+                className="rounded-xl"
+              />
+            </div>
+            {mpesaType === "paybill" && (
+              <div className="space-y-2">
+                <Label>Account reference (optional)</Label>
+                <Input
+                  value={mpesaAccountRef}
+                  onChange={(e) => setMpesaAccountRef(e.target.value)}
+                  placeholder="Shown on the M-Pesa prompt (max 12 chars)"
+                  maxLength={12}
+                  className="rounded-xl"
+                />
+              </div>
+            )}
+            <Button onClick={handleSaveMpesa} disabled={savingMpesa} className="rounded-xl">
+              {savingMpesa && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Save M-Pesa Settings
+            </Button>
+          </CardContent>
+        </Card>
+
+
+
+        <Card className="glass">
+          <CardHeader>
             <CardTitle>Appearance</CardTitle>
             <CardDescription>Choose your preferred theme</CardDescription>
           </CardHeader>
