@@ -38,6 +38,7 @@ import Documents from "./pages/Documents";
 import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
 import PlatformAdmin from "./pages/PlatformAdmin";
+import StockTake from "./pages/StockTake";
 import InviteAccept from "./pages/InviteAccept";
 
 const queryClient = new QueryClient();
@@ -66,6 +67,7 @@ const App = () => (
               <Route path="/returns" element={<PrivateRoute><RoleRoute requiredRole="staff"><Returns /></RoleRoute></PrivateRoute>} />
               <Route path="/suppliers" element={<PrivateRoute><RoleRoute requiredRole="staff"><Suppliers /></RoleRoute></PrivateRoute>} />
               <Route path="/purchases" element={<PrivateRoute><RoleRoute requiredRole="staff"><Purchases /></RoleRoute></PrivateRoute>} />
+              <Route path="/stock-take" element={<PrivateRoute><RoleRoute requiredRole="staff"><StockTake /></RoleRoute></PrivateRoute>} />
               <Route path="/expenses" element={<PrivateRoute><RoleRoute requiredRole="staff"><Expenses /></RoleRoute></PrivateRoute>} />
               <Route path="/debtors" element={<PrivateRoute><RoleRoute requiredRole="staff"><Debtors /></RoleRoute></PrivateRoute>} />
               <Route path="/finance" element={<PrivateRoute><RoleRoute requiredRole="admin"><Finance /></RoleRoute></PrivateRoute>} />
