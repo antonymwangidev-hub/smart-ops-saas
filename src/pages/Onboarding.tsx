@@ -19,7 +19,7 @@ export default function Onboarding() {
 
   if (loading) return null;
   if (!user) return <Navigate to="/auth" replace />;
-  if (currentOrg) return <Navigate to="/dashboard" replace />;
+  if (currentOrg) return <Navigate to="/daily-summary" replace />;
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
