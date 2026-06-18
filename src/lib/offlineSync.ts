@@ -131,12 +131,16 @@ export async function syncOfflineSales(): Promise<{ synced: number; failed: numb
       } catch { /* silent */ }
 
       // 1 ── Insert sale row
+      // Map payment_method to DB-allowed values ('cash','mpesa','mixed','credit')
+      // Credit sales use is_credit=true; payment_method stored as 'cash' for constraint safety
+      const dbPaymentMethod = sale.is_credit ? 'cash' : sale.payment_method;
+
       const { data: saleRow, error: saleErr } = await supabase
         .from("sales")
         .insert({
           organization_id: sale.organization_id,
           total_amount: sale.total_amount,
-          payment_method: sale.payment_method,
+          payment_method: dbPaymentMethod,
           cash_received: sale.cash_received,
           change_given: sale.change_given,
           is_credit: sale.is_credit,
