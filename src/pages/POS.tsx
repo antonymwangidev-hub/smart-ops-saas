@@ -605,7 +605,7 @@ export default function POS() {
   return (
     <AppLayout>
       <style>{PRINT_STYLE}</style>
-      <div className="space-y-4 pb-36">
+      <div className="space-y-4 pb-64">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold text-foreground">Point of Sale</h1>
           <div className="flex items-center gap-2">
@@ -662,7 +662,7 @@ export default function POS() {
 
         {/* Sticky cart bar */}
         {cart.length > 0 && (
-          <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-3 shadow-lg z-50">
+          <div className="fixed bottom-0 left-0 right-0 md:bottom-0 bg-card border-t border-border p-3 shadow-2xl z-40 pb-[calc(0.75rem+64px+env(safe-area-inset-bottom))] md:pb-3">
             <div className="max-w-screen-md mx-auto">
               <div className="max-h-52 overflow-y-auto space-y-2 mb-3">
                 {cart.map((item) => (
