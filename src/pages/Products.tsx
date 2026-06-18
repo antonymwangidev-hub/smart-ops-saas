@@ -388,6 +388,7 @@ export default function Products() {
               </Card>
             ) : (
               <Card>
+                <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -448,6 +449,7 @@ export default function Products() {
                     })}
                   </TableBody>
                 </Table>
+                </div>
               </Card>
             )}
 
@@ -590,7 +592,7 @@ export default function Products() {
 
         {/* ── Create / Edit Dialog ── */}
         <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) { setEditingId(null); setForm(emptyForm); } }}>
-          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogContent className="w-[95vw] max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl">
             <DialogHeader><DialogTitle>{editingId ? "Edit Product" : "Add Product"}</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
