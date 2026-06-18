@@ -8,34 +8,24 @@
   :root {
     --background: 210 20% 98%;
     --foreground: 220 20% 10%;
-
     --card: 0 0% 100%;
     --card-foreground: 220 20% 10%;
-
     --popover: 0 0% 100%;
     --popover-foreground: 220 20% 10%;
-
     --primary: 239 84% 67%;
     --primary-foreground: 0 0% 100%;
-
     --secondary: 160 84% 39%;
     --secondary-foreground: 0 0% 100%;
-
     --muted: 220 14% 96%;
     --muted-foreground: 220 9% 46%;
-
     --accent: 239 84% 97%;
     --accent-foreground: 239 84% 67%;
-
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-
     --border: 220 13% 91%;
     --input: 220 13% 91%;
     --ring: 239 84% 67%;
-
     --radius: 0.75rem;
-
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 220 20% 10%;
     --sidebar-primary: 239 84% 67%;
@@ -44,7 +34,6 @@
     --sidebar-accent-foreground: 239 84% 67%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 239 84% 67%;
-
     --success: 160 84% 39%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
@@ -56,32 +45,23 @@
   .dark {
     --background: 224 47% 5%;
     --foreground: 220 13% 91%;
-
     --card: 222 47% 8%;
     --card-foreground: 220 13% 91%;
-
     --popover: 222 47% 8%;
     --popover-foreground: 220 13% 91%;
-
     --primary: 239 84% 67%;
     --primary-foreground: 0 0% 100%;
-
     --secondary: 160 84% 39%;
     --secondary-foreground: 0 0% 100%;
-
     --muted: 223 47% 13%;
     --muted-foreground: 218 11% 65%;
-
     --accent: 224 47% 14%;
     --accent-foreground: 220 13% 91%;
-
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
-
     --border: 222 47% 14%;
     --input: 222 47% 14%;
     --ring: 239 84% 67%;
-
     --sidebar-background: 224 47% 5%;
     --sidebar-foreground: 220 13% 91%;
     --sidebar-primary: 239 84% 67%;
@@ -90,7 +70,6 @@
     --sidebar-accent-foreground: 220 13% 91%;
     --sidebar-border: 222 47% 14%;
     --sidebar-ring: 239 84% 67%;
-
     --success: 160 84% 39%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
@@ -101,96 +80,128 @@
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
-
+  * { @apply border-border; }
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', sans-serif;
+    /* Prevent overscroll bounce on iOS */
+    overscroll-behavior: none;
   }
 }
 
 @layer utilities {
-  .glass {
-    @apply bg-card/70 backdrop-blur-xl border border-border/50 shadow-lg;
+  .glass { @apply bg-card/70 backdrop-blur-xl border border-border/50 shadow-lg; }
+  .glass-hover { @apply transition-all duration-300 hover:shadow-xl hover:border-primary/20 hover:-translate-y-0.5; }
+  .premium-card { @apply rounded-2xl border border-border/50 bg-card shadow-sm transition-all duration-300 hover:shadow-lg hover:border-primary/20; }
+  .premium-glow { box-shadow: 0 0 20px -5px hsl(var(--primary) / 0.3); }
+  .text-success { color: hsl(var(--success)); }
+  .text-warning { color: hsl(var(--warning)); }
+  .text-info    { color: hsl(var(--info)); }
+  .bg-success   { background-color: hsl(var(--success)); }
+  .bg-warning   { background-color: hsl(var(--warning)); }
+  .border-success { border-color: hsl(var(--success)); }
+  .border-warning { border-color: hsl(var(--warning)); }
+  .bg-success\/5  { background-color: hsl(var(--success) / 0.05); }
+  .bg-success\/10 { background-color: hsl(var(--success) / 0.1); }
+  .bg-success\/20 { background-color: hsl(var(--success) / 0.2); }
+  .bg-warning\/5  { background-color: hsl(var(--warning) / 0.05); }
+  .bg-warning\/10 { background-color: hsl(var(--warning) / 0.1); }
+  .bg-warning\/30 { background-color: hsl(var(--warning) / 0.3); }
+  .border-success\/20 { border-color: hsl(var(--success) / 0.2); }
+  .border-success\/30 { border-color: hsl(var(--success) / 0.3); }
+  .border-warning\/30 { border-color: hsl(var(--warning) / 0.3); }
+  .text-success\/80 { color: hsl(var(--success) / 0.8); }
+  .animate-fade-in { animation: fadeIn 0.2s ease-out; }
+
+  /* ── Mobile touch utilities ── */
+
+  /* Min 44×44px tap target per Apple HIG / WCAG 2.5.5 */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
-  .glass-hover {
-    @apply transition-all duration-300 hover:shadow-xl hover:border-primary/20 hover:-translate-y-0.5;
+  /* Removes grey flash on tap in iOS WebKit */
+  .tap-highlight-none {
+    -webkit-tap-highlight-color: transparent;
   }
 
-  .premium-card {
-    @apply rounded-2xl border border-border/50 bg-card shadow-sm transition-all duration-300 hover:shadow-lg hover:border-primary/20;
+  /* Full-width CTA button for mobile */
+  .btn-mobile-full {
+    @apply w-full h-14 text-base rounded-xl font-semibold;
   }
 
-  .premium-glow {
-    box-shadow: 0 0 20px -5px hsl(var(--primary) / 0.15);
+  /* Safe area padding for bottom nav */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
-  .gradient-text {
-    @apply bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent;
+  /* Scrollable table container on mobile */
+  .table-mobile-scroll {
+    @apply overflow-x-auto -mx-3 px-3;
+    -webkit-overflow-scrolling: touch;
   }
 }
 
-/* Smooth scrollbar for dark mode */
-.dark ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-.dark ::-webkit-scrollbar-track {
-  background: hsl(var(--background));
-}
-.dark ::-webkit-scrollbar-thumb {
-  background: hsl(var(--border));
-  border-radius: 3px;
-}
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground));
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Safe area for mobile bottom nav */
-.safe-area-bottom {
-  padding-bottom: env(safe-area-inset-bottom);
+/* ── Scrollbars (desktop only) ── */
+@media (min-width: 768px) {
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: hsl(var(--background)); }
+  ::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground)); }
 }
 
-/* Mobile: prevent zoom on form inputs (iOS) */
+/* ── CRITICAL: prevent iOS zoom on inputs ── */
 @media (max-width: 768px) {
-  input[type="text"], input[type="number"], input[type="email"],
-  input[type="tel"], input[type="password"], input[type="search"],
-  select, textarea {
+  input[type="text"],
+  input[type="number"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="password"],
+  input[type="search"],
+  input[type="date"],
+  select,
+  textarea {
     font-size: 16px !important;
   }
+
+  /* Make all buttons easier to tap */
+  button, [role="button"], a[href] {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Dialog full-width on mobile */
+  [data-radix-dialog-content] {
+    max-width: calc(100vw - 24px) !important;
+    margin: 12px !important;
+  }
+
+  /* Sheet covers full screen bottom */
+  [data-radix-sheet-content][data-side="bottom"] {
+    border-radius: 16px 16px 0 0;
+  }
 }
 
-/* Print: show ONLY the receipt, hide everything else */
+/* ── Print: 80mm thermal receipt ── */
 @media print {
-  body * {
-    visibility: hidden !important;
-  }
-  .print-receipt, .print-receipt * {
-    visibility: visible !important;
-  }
+  @page { margin: 5mm; size: 80mm auto; }
+  body * { visibility: hidden !important; }
+  .print-receipt, .print-receipt * { visibility: visible !important; }
   .print-receipt {
     position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
-    width: 100% !important;
-    max-width: 80mm !important;
-    margin: 0 !important;
-    padding: 8px !important;
-    box-shadow: none !important;
-    border: none !important;
-    background: white !important;
-    color: black !important;
-  }
-  .print-receipt * {
-    color: black !important;
-    background: transparent !important;
-    border-color: #999 !important;
-  }
-  @page {
-    margin: 5mm;
-    size: 80mm auto;
+    left: 0 !important; top: 0 !important;
+    width: 100% !important; max-width: 80mm !important;
+    margin: 0 !important; padding: 8px !important;
+    box-shadow: none !important; border: none !important;
+    background: white !important; color: black !important;
+    font-family: monospace !important; font-size: 12px !important;
   }
 }
