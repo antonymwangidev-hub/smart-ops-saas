@@ -265,12 +265,16 @@ export default function POS() {
     if (navigator.onLine) {
       try {
         // Step 1: Insert sale
+        // Map payment_method to DB-safe values:
+        // credit sales use 'cash' + is_credit=true (credit is a relationship, not a payment method)
+        const dbPaymentMethod = saleData.is_credit ? 'cash' : saleData.payment_method;
+
         const { data: saleRow, error: saleErr } = await supabase
           .from("sales")
           .insert({
             organization_id: saleData.organization_id,
             total_amount: saleData.total_amount,
-            payment_method: saleData.payment_method,
+            payment_method: dbPaymentMethod,
             cash_received: saleData.cash_received,
             change_given: saleData.change_given,
             is_credit: saleData.is_credit,
