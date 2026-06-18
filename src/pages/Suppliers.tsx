@@ -250,7 +250,7 @@ export default function Suppliers() {
           {/* ── SUPPLIERS TAB ── */}
           <TabsContent value="suppliers">
             <Card>
-              <CardContent className="p-0">
+              <CardContent className="p-0 overflow-x-auto">
                 {isLoading ? <div className="p-8 flex justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>
                   : suppliers.length === 0 ? <p className="text-sm text-muted-foreground text-center py-8">No suppliers yet. Add your first one.</p>
                   : (
@@ -308,7 +308,7 @@ export default function Suppliers() {
                 <CardTitle className="text-base">Payable Aging Report</CardTitle>
                 <p className="text-sm text-muted-foreground">Total due: <span className="font-bold text-foreground">{formatAmount(totalPayable)}</span></p>
               </CardHeader>
-              <CardContent className="p-0">
+              <CardContent className="p-0 overflow-x-auto">
                 {payables.length === 0 ? (
                   <div className="p-8 text-center">
                     <CheckCircle2 className="h-8 w-8 text-success mx-auto mb-2" />
@@ -359,7 +359,7 @@ export default function Suppliers() {
 
         {/* ── Supplier form dialog ── */}
         <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) resetForm(); }}>
-          <DialogContent>
+          <DialogContent className="w-[95vw] max-w-md rounded-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle>{editing ? "Edit Supplier" : "New Supplier"}</DialogTitle></DialogHeader>
             <div className="space-y-3">
               <div><Label>Name *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
@@ -390,7 +390,7 @@ export default function Suppliers() {
 
         {/* ── LPO Dialog ── */}
         <Dialog open={lpoOpen} onOpenChange={setLpoOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl">
             <DialogHeader><DialogTitle className="flex items-center gap-2"><FileText className="h-5 w-5" /> Create Local Purchase Order</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
