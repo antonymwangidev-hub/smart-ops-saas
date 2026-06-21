@@ -189,7 +189,8 @@ export default function Expenses() {
             {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : expenses.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-8">No expenses logged yet.</p>
             ) : (
-              <Table>
+              <div className="overflow-x-auto">
+<Table>
                 <TableHeader><TableRow>
                   <TableHead>Date</TableHead><TableHead>Description</TableHead>
                   <TableHead>Category</TableHead><TableHead>Method</TableHead>
@@ -211,6 +212,7 @@ export default function Expenses() {
                   ))}
                 </TableBody>
               </Table>
+</div>
             )}
           </CardContent>
         </Card>
