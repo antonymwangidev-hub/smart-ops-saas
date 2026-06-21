@@ -462,7 +462,8 @@ export default function PlatformAdmin() {
                     <CardDescription>{orgs.length} organizations registered</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <Table>
+                    <div className="overflow-x-auto">
+<Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead>Name</TableHead>
@@ -530,6 +531,7 @@ export default function PlatformAdmin() {
                         )}
                       </TableBody>
                     </Table>
+</div>
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -541,7 +543,8 @@ export default function PlatformAdmin() {
                     <CardDescription>{users.length} users across the platform</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <Table>
+                    <div className="overflow-x-auto">
+<Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead>User</TableHead>
@@ -627,6 +630,7 @@ export default function PlatformAdmin() {
                         )}
                       </TableBody>
                     </Table>
+</div>
                   </CardContent>
                 </Card>
               </TabsContent>
