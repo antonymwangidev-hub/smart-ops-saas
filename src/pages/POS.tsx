@@ -20,6 +20,7 @@ import {
   getOfflineQueue, retryFailedSale, discardOfflineSale,
   getAllOfflineSales, type OfflineSale,
 } from "@/lib/offlineSync";
+import { toInternationalFormat, getPhoneValidationError } from "@/lib/phone";
 
 interface CartItem {
   product_id: string;
@@ -304,18 +305,10 @@ export default function POS() {
           if (itemsErr) throw itemsErr;
         }
 
-        // Step 3: Decrement stock (non-fatal per item)
-        for (const item of cart) {
-          try {
-            const { data: prod } = await supabase
-              .from("products").select("stock_quantity").eq("id", item.product_id).single();
-            if (prod) {
-              await supabase.from("products")
-                .update({ stock_quantity: Math.max(0, (prod as any).stock_quantity - item.quantity) } as any)
-                .eq("id", item.product_id);
-            }
-          } catch { /* non-fatal */ }
-        }
+        // Step 3: Stock is decremented automatically by the database trigger
+        // trg_decrement_stock_on_sale (AFTER INSERT ON sale_items). Do NOT
+        // decrement manually here — that caused every sale to deduct stock
+        // twice (once via trigger, once via this old client-side code).
 
         // Step 4: Credit sale — create customer + credit_sales record
         if (isCredit) {
@@ -459,9 +452,8 @@ export default function POS() {
 
   const handleWhatsApp = () => {
     if (!lastSale) return;
-    const phone = (lastSale.phone || "").replace(/[^\d]/g, "");
-    if (!phone) { toast({ title: "No phone number entered for this sale", variant: "destructive" }); return; }
-    const normalized = phone.startsWith("0") ? "254" + phone.slice(1) : phone.startsWith("254") ? phone : "254" + phone;
+    const normalized = toInternationalFormat(lastSale.phone || "");
+    if (!normalized) { toast({ title: "No valid phone number entered for this sale", variant: "destructive" }); return; }
     window.open(`https://wa.me/${normalized}?text=${encodeURIComponent(buildReceiptText(lastSale))}`, "_blank");
   };
 
@@ -633,10 +625,16 @@ export default function POS() {
                 placeholder="Phone number (e.g. 0712 345 678)"
                 value={customerPhone}
                 onChange={(e) => setCustomerPhone(e.target.value)}
-                className="h-12 text-base"
+                className={`h-12 text-base ${customerPhone && getPhoneValidationError(customerPhone) ? "border-destructive" : ""}`}
                 type="tel"
                 inputMode="tel"
               />
+              {customerPhone && getPhoneValidationError(customerPhone) && (
+                <p className="text-xs text-destructive -mt-1">{getPhoneValidationError(customerPhone)}</p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Add their phone so you can send a deni reminder later via WhatsApp
+              </p>
             </div>
           )}
 
