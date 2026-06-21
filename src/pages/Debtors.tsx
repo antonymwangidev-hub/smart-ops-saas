@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { AlertCircle, Loader2, DollarSign, MessageCircle, Phone, User, Calendar } from "lucide-react";
+import { toInternationalFormat, isValidKenyanPhone } from "@/lib/phone";
 
 function ageDays(d: string | null) {
   if (!d) return null;
@@ -96,17 +97,16 @@ export default function Debtors() {
   });
 
   const sendWhatsApp = (debt: any) => {
-    if (!debt.phone) { toast({ title: "No phone number saved", variant: "destructive" }); return; }
+    const normalized = toInternationalFormat(debt.phone || "");
+    if (!normalized) { toast({ title: "No valid phone number saved for this customer", variant: "destructive" }); return; }
     const balance = Number(debt.total_amount) - Number(debt.amount_paid || 0);
     const msg = `Hi ${debt.customer_name}, friendly reminder: you have an outstanding balance of ${formatAmount(balance)} with ${currentOrg?.name}. Please settle when convenient. Asante!`;
-    const phone = debt.phone.replace(/[^0-9]/g, "");
-    const normalized = phone.startsWith("0") ? "254" + phone.slice(1) : phone;
     window.open(`https://wa.me/${normalized}?text=${encodeURIComponent(msg)}`, "_blank");
     markReminderSent.mutate(debt);
   };
 
   const sendSMS = (debt: any) => {
-    if (!debt.phone) { toast({ title: "No phone number saved", variant: "destructive" }); return; }
+    if (!isValidKenyanPhone(debt.phone || "")) { toast({ title: "No valid phone number saved for this customer", variant: "destructive" }); return; }
     const balance = Number(debt.total_amount) - Number(debt.amount_paid || 0);
     const msg = `Hi ${debt.customer_name}, balance: ${formatAmount(balance)} with ${currentOrg?.name}. Asante!`;
     window.open(`sms:${debt.phone}?body=${encodeURIComponent(msg)}`, "_blank");
