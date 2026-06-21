@@ -327,7 +327,8 @@ export default function Documents() {
             <CardDescription>{docs.length} documents</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
-            <Table>
+            <div className="overflow-x-auto">
+<Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Document</TableHead>
@@ -403,6 +404,7 @@ export default function Documents() {
                 )}
               </TableBody>
             </Table>
+</div>
           </CardContent>
         </Card>
       </div>
