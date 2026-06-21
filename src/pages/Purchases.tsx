@@ -227,7 +227,8 @@ export default function Purchases() {
             {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : pos.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-8">No purchase orders yet.</p>
             ) : (
-              <Table>
+              <div className="overflow-x-auto">
+<Table>
                 <TableHeader><TableRow>
                   <TableHead>PO #</TableHead><TableHead>Supplier</TableHead><TableHead>Status</TableHead>
                   <TableHead>Items</TableHead><TableHead className="text-right">Total</TableHead>
@@ -262,6 +263,7 @@ export default function Purchases() {
                   })}
                 </TableBody>
               </Table>
+</div>
             )}
           </CardContent>
         </Card>
