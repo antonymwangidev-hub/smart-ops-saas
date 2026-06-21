@@ -109,11 +109,11 @@ export default function Auth() {
             <CardDescription>Sign in to your account or create a new one</CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="login">
+            <Tabs defaultValue="phone">
               <TabsList className="grid w-full grid-cols-3 mb-4">
+                <TabsTrigger value="phone">Phone</TabsTrigger>
                 <TabsTrigger value="login">Login</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>
-                <TabsTrigger value="phone">Phone</TabsTrigger>
               </TabsList>
               <TabsContent value="login">
                 <form onSubmit={handleLogin} className="space-y-4">
@@ -200,16 +200,19 @@ export default function Auth() {
                     <Input
                       id="phone"
                       type="tel"
+                      inputMode="tel"
                       placeholder="0712345678"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       required
                       disabled={otpSent}
+                      className="h-12 text-base"
+                      autoFocus
                     />
                     <p className="text-xs text-muted-foreground">Kenyan numbers auto-prefixed with +254.</p>
                   </div>
                   {!otpSent ? (
-                    <Button type="button" className="w-full" onClick={handleSendOtp} disabled={submitting}>
+                    <Button type="button" className="w-full h-12 text-base" onClick={handleSendOtp} disabled={submitting}>
                       {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                       Send verification code
                     </Button>
@@ -223,9 +226,11 @@ export default function Auth() {
                           value={otp}
                           onChange={(e) => setOtp(e.target.value)}
                           required
+                          className="h-12 text-base text-center tracking-widest"
+                          autoFocus
                         />
                       </div>
-                      <Button type="submit" className="w-full" disabled={submitting}>
+                      <Button type="submit" className="w-full h-12 text-base" disabled={submitting}>
                         {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                         Verify & sign in
                       </Button>
