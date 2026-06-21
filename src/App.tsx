@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { OrgProvider } from "@/contexts/OrgContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { PrivateRoute } from "@/components/PrivateRoute";
 import { RoleRoute } from "@/components/RoleRoute";
 import Auth from "./pages/Auth";
@@ -44,6 +45,7 @@ import InviteAccept from "./pages/InviteAccept";
 const queryClient = new QueryClient();
 
 const App = () => (
+  <ErrorBoundary>
   <ThemeProvider>
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -96,6 +98,7 @@ const App = () => (
     </TooltipProvider>
   </QueryClientProvider>
   </ThemeProvider>
+  </ErrorBoundary>
 );
 
 export default App;
