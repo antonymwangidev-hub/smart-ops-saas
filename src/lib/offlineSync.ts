@@ -171,19 +171,9 @@ export async function syncOfflineSales(): Promise<{ synced: number; failed: numb
         if (itemsErr) throw itemsErr;
       }
 
-      // 3 ── Stock reconciliation
-      for (const item of sale.items) {
-        if (!item.product_id) continue;
-        try {
-          const { data: product } = await supabase
-            .from("products").select("stock_quantity").eq("id", item.product_id).single();
-          if (product) {
-            await supabase.from("products")
-              .update({ stock_quantity: Math.max(0, (product as any).stock_quantity - item.quantity) } as any)
-              .eq("id", item.product_id);
-          }
-        } catch { /* non-fatal — corrected on next stock take */ }
-      }
+      // 3 ── Stock is decremented automatically by the database trigger
+      // trg_decrement_stock_on_sale (AFTER INSERT ON sale_items). Do NOT
+      // decrement manually here — see POS.tsx for the same fix and explanation.
 
       // 4 ── Credit sale: create customer + credit_sales record
       if (sale.is_credit && sale.customer_name) {
