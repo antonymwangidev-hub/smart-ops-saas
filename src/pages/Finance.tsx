@@ -144,7 +144,8 @@ export default function Finance() {
             <Card>
               <CardHeader><CardTitle>Profit & Loss Statement</CardTitle></CardHeader>
               <CardContent>
-                <Table>
+                <div className="overflow-x-auto">
+<Table>
                   <TableBody>
                     <TableRow><TableCell className="font-medium">Revenue (Sales)</TableCell><TableCell className="text-right">{formatAmount(totals.revenue)}</TableCell></TableRow>
                     <TableRow><TableCell className="text-muted-foreground pl-6">Cost of Goods Sold</TableCell><TableCell className="text-right text-destructive">({formatAmount(totals.cogs)})</TableCell></TableRow>
@@ -153,6 +154,7 @@ export default function Finance() {
                     <TableRow className="border-t-2"><TableCell className="font-bold text-lg">Net Profit</TableCell><TableCell className={`text-right font-bold text-lg ${totals.netProfit >= 0 ? "text-emerald-600" : "text-destructive"}`}>{formatAmount(totals.netProfit)}</TableCell></TableRow>
                   </TableBody>
                 </Table>
+</div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -162,7 +164,8 @@ export default function Finance() {
               <Card>
                 <CardHeader><CardTitle className="text-emerald-600">Cash In</CardTitle></CardHeader>
                 <CardContent>
-                  <Table>
+                  <div className="overflow-x-auto">
+<Table>
                     <TableHeader><TableRow><TableHead>Method</TableHead><TableHead className="text-right">Amount</TableHead></TableRow></TableHeader>
                     <TableBody>
                       {Object.entries(totals.cashIn).map(([k, v]) => (
@@ -171,12 +174,14 @@ export default function Finance() {
                       <TableRow className="border-t-2"><TableCell className="font-bold">Total In</TableCell><TableCell className="text-right font-bold">{formatAmount(totals.totalIn)}</TableCell></TableRow>
                     </TableBody>
                   </Table>
+</div>
                 </CardContent>
               </Card>
               <Card>
                 <CardHeader><CardTitle className="text-destructive">Cash Out</CardTitle></CardHeader>
                 <CardContent>
-                  <Table>
+                  <div className="overflow-x-auto">
+<Table>
                     <TableHeader><TableRow><TableHead>Method</TableHead><TableHead className="text-right">Amount</TableHead></TableRow></TableHeader>
                     <TableBody>
                       {Object.entries(totals.cashOut).map(([k, v]) => (
@@ -185,6 +190,7 @@ export default function Finance() {
                       <TableRow className="border-t-2"><TableCell className="font-bold">Total Out</TableCell><TableCell className="text-right font-bold">{formatAmount(totals.totalOut)}</TableCell></TableRow>
                     </TableBody>
                   </Table>
+</div>
                 </CardContent>
               </Card>
             </div>
@@ -207,7 +213,8 @@ export default function Finance() {
                 {Object.keys(totals.byCat).length === 0 ? (
                   <p className="text-sm text-muted-foreground text-center py-6">No expenses in this period.</p>
                 ) : (
-                  <Table>
+                  <div className="overflow-x-auto">
+<Table>
                     <TableHeader><TableRow><TableHead>Category</TableHead><TableHead className="text-right">Amount</TableHead><TableHead className="text-right">% of total</TableHead></TableRow></TableHeader>
                     <TableBody>
                       {Object.entries(totals.byCat).sort((a, b) => (b[1] as number) - (a[1] as number)).map(([k, v]) => (
@@ -221,6 +228,7 @@ export default function Finance() {
                       ))}
                     </TableBody>
                   </Table>
+</div>
                 )}
               </CardContent>
             </Card>
