@@ -17,6 +17,13 @@ function toLocalISODate(d: Date) {
   return `${y}-${m}-${day}`;
 }
 
+function swahiliGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Habari za asubuhi";
+  if (hour < 17) return "Habari za mchana";
+  return "Habari za jioni";
+}
+
 export default function DailySummary() {
   const { currentOrg } = useOrg();
   const { formatAmount } = useCurrency();
@@ -86,6 +93,11 @@ export default function DailySummary() {
     <AppLayout>
       <div className="space-y-4 px-1">
         <div>
+          {isToday && (
+            <p className="text-sm text-primary font-medium mb-0.5">
+              {swahiliGreeting()}{currentOrg?.name ? `, ${currentOrg.name}` : ""} 👋
+            </p>
+          )}
           <h1 className="text-xl font-bold text-foreground">{isToday ? "Today's Summary" : "Sales History"}</h1>
           <p className="text-sm text-muted-foreground">{dateLabel}</p>
         </div>
