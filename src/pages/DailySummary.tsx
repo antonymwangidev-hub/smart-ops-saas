@@ -52,7 +52,7 @@ export default function DailySummary() {
 
       const { data: sales } = await supabase
         .from("sales")
-        .select("*")
+        .select("id, total_amount, payment_method, is_credit, customer_name, created_at")
         .eq("organization_id", currentOrg.id)
         .gte("created_at", dayStart.toISOString())
         .lte("created_at", dayEnd.toISOString())
