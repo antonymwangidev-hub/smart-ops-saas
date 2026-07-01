@@ -525,6 +525,36 @@ export type Database = {
           },
         ]
       }
+      mpesa_stk_rate_limits: {
+        Row: {
+          attempts: number
+          created_at: string
+          id: string
+          phone_number: string
+          updated_at: string
+          user_id: string
+          window_start: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          phone_number: string
+          updated_at?: string
+          user_id: string
+          window_start?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          phone_number?: string
+          updated_at?: string
+          user_id?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
@@ -1822,9 +1852,22 @@ export type Database = {
     }
     Functions: {
       accept_invitation: { Args: { _token: string }; Returns: Json }
+      check_mpesa_stk_rate_limit: {
+        Args: { _phone: string; _user_id: string }
+        Returns: Json
+      }
       create_organization_with_admin: {
         Args: { org_name: string }
         Returns: string
+      }
+      find_user_by_email: {
+        Args: { _email: string }
+        Returns: {
+          created_at: string
+          email: string
+          id: string
+          last_sign_in_at: string
+        }[]
       }
       get_invitation_by_token: {
         Args: { _token: string }
