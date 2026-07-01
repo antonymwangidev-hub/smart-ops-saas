@@ -30,6 +30,27 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
+    // Shared-secret authentication: only pg_cron / server callers know ALERTS_SECRET.
+    const expected = Deno.env.get("ALERTS_SECRET");
+    if (!expected) {
+      return new Response(JSON.stringify({ error: "server_misconfigured" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const url = new URL(req.url);
+    const provided =
+      url.searchParams.get("secret") ||
+      req.headers.get("x-alerts-secret") ||
+      "";
+    // Constant-time-ish compare
+    if (provided.length !== expected.length || provided !== expected) {
+      return new Response(JSON.stringify({ error: "unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -121,7 +142,8 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message }), {
+    console.error("smart-alerts-engine error", err);
+    return new Response(JSON.stringify({ error: "internal_error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
