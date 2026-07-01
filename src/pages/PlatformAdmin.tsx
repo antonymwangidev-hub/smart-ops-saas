@@ -75,7 +75,7 @@ export default function PlatformAdmin() {
   const [orgGrowth, setOrgGrowth] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [resetDialog, setResetDialog] = useState<{ open: boolean; tempPassword?: string; email?: string }>({ open: false });
+  const [resetDialog, setResetDialog] = useState<{ open: boolean; email?: string }>({ open: false });
   const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; title: string; description: string; onConfirm: () => void }>({
     open: false, title: "", description: "", onConfirm: () => {},
   });
