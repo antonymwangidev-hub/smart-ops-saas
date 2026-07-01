@@ -142,7 +142,7 @@ Available actions: create_task, send_notification, log_event, update_order_statu
     });
   } catch (e) {
     console.error("ai-automation-suggestions error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
+    return new Response(JSON.stringify({ error: "An internal error occurred" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
