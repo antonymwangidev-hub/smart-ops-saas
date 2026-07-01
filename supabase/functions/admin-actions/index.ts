@@ -93,14 +93,36 @@ Deno.serve(async (req) => {
           status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const tempPassword = crypto.randomUUID().slice(0, 12) + "Aa1!";
-      const { error: updateError } = await adminClient.auth.admin.updateUserById(user_id, { password: tempPassword });
-      if (updateError) throw updateError;
+      // Send a password-recovery email via Supabase Auth instead of returning a temp
+      // password in the response body (avoids leaking secrets to dev tools / proxy logs).
+      const { error: linkError } = await adminClient.auth.admin.generateLink({
+        type: "recovery",
+        email: userData.user.email,
+      });
+      if (linkError) throw linkError;
+
+      // Audit trail
+      await adminClient.from("activity_logs").insert({
+        organization_id: null,
+        user_id: user.id,
+        action: "password_reset_email_sent",
+        metadata: {
+          target_user_id: user_id,
+          target_email: userData.user.email,
+          triggered_by_email: user.email,
+        },
+      });
+
       return new Response(
-        JSON.stringify({ success: true, temp_password: tempPassword, email: userData.user.email }),
+        JSON.stringify({
+          success: true,
+          email: userData.user.email,
+          message: "A password reset email has been sent to the user.",
+        }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
 
     if (action === "list_users") {
       if (!(await checkPlatformAdmin())) {
