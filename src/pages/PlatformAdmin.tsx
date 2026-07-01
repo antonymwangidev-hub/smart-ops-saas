@@ -226,7 +226,7 @@ export default function PlatformAdmin() {
     setConfirmDialog({
       open: true,
       title: "Reset User Password",
-      description: `Generate a new temporary password for "${u.display_name || u.email}"? They will need to change it on next login.`,
+      description: `Send a password reset email to "${u.display_name || u.email}"? They'll receive a secure link to choose a new password.`,
       onConfirm: async () => {
         setConfirmDialog(prev => ({ ...prev, open: false }));
         setActionLoading(u.id);
