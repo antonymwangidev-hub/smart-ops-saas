@@ -300,10 +300,11 @@ Deno.serve(async (req) => {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      // Find user by email
-      const { data: usersData } = await adminClient.auth.admin.listUsers({ perPage: 1000 });
-      const targetUser = usersData?.users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
+      // Fast lookup via SECURITY DEFINER RPC (O(1) instead of paginated listUsers)
+      const { data: found } = await adminClient.rpc("find_user_by_email", { _email: email });
+      const targetUser = Array.isArray(found) && found.length > 0 ? found[0] : null;
       if (!targetUser) {
+
         return new Response(JSON.stringify({ error: "No account found with that email. They must sign up first." }), {
           status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
