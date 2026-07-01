@@ -232,7 +232,8 @@ export default function PlatformAdmin() {
         setActionLoading(u.id);
         try {
           const result = await invokeAdminAction({ action: "reset_user_password", user_id: u.id });
-          setResetDialog({ open: true, tempPassword: result.temp_password, email: result.email });
+          setResetDialog({ open: true, email: result.email });
+
         } catch (err: any) {
           toast.error(err.message || "Failed to reset password");
         } finally {
