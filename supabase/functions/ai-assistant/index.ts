@@ -59,8 +59,14 @@ serve(async (req) => {
     ).slice(0, 5);
 
     const docContents: { name: string; text: string }[] = [];
+    const storagePrefix = `${supabaseUrl}/storage/v1/object/`;
     for (const doc of pdfDocs) {
       try {
+        // SSRF guard: only fetch from this project's own Supabase Storage
+        if (typeof doc.file_url !== "string" || !doc.file_url.startsWith(storagePrefix)) {
+          console.warn(`Skipping non-storage file_url for ${doc.file_name}`);
+          continue;
+        }
         const res = await fetch(doc.file_url);
         if (!res.ok) continue;
         const buffer = await res.arrayBuffer();
