@@ -660,22 +660,17 @@ export default function PlatformAdmin() {
       <Dialog open={resetDialog.open} onOpenChange={(open) => setResetDialog(prev => ({ ...prev, open }))}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Password Reset Successful</DialogTitle>
+            <DialogTitle>Password Reset Email Sent</DialogTitle>
             <DialogDescription>
-              A temporary password has been generated for <strong>{resetDialog.email}</strong>. Share it securely with the user.
+              A password reset link has been emailed to <strong>{resetDialog.email}</strong>. They can follow the link to choose a new password.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex items-center gap-2 p-3 rounded-lg bg-muted font-mono text-sm">
-            <span className="flex-1 select-all">{resetDialog.tempPassword}</span>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={copyPassword}>
-              {copied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
-            </Button>
-          </div>
           <DialogFooter>
             <Button onClick={() => setResetDialog({ open: false })}>Done</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
 
       {/* Add Owner Dialog */}
       <Dialog open={addOwnerDialog.open} onOpenChange={(open) => setAddOwnerDialog(prev => ({ ...prev, open }))}>
