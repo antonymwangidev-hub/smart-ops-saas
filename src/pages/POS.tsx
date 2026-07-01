@@ -437,16 +437,20 @@ export default function POS() {
   const handlePrint = () => {
     const printWin = window.open("", "_blank", "width=400,height=600");
     if (!printWin || !lastSale) return;
-    printWin.document.write(`
-      <html><head><title>Receipt</title>
-      <style>
-        @page { size: 80mm auto; margin: 4mm; }
-        body { font-family: monospace; font-size: 12px; width: 72mm; margin: 0; }
-        pre { white-space: pre-wrap; word-break: break-word; }
-      </style></head>
-      <body><pre>${buildReceiptText(lastSale)}</pre></body></html>
-    `);
-    printWin.document.close();
+    // Build DOM programmatically so receipt text is treated as text, never HTML.
+    const doc = printWin.document;
+    doc.open();
+    doc.write(
+      '<html><head><title>Receipt</title>' +
+      '<style>@page{size:80mm auto;margin:4mm}' +
+      'body{font-family:monospace;font-size:12px;width:72mm;margin:0}' +
+      'pre{white-space:pre-wrap;word-break:break-word}</style>' +
+      '</head><body></body></html>'
+    );
+    doc.close();
+    const pre = doc.createElement("pre");
+    pre.textContent = buildReceiptText(lastSale);
+    doc.body.appendChild(pre);
     setTimeout(() => { printWin.print(); printWin.close(); }, 300);
   };
 
