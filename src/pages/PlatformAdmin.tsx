@@ -291,13 +291,9 @@ export default function PlatformAdmin() {
     });
   };
 
-  const copyPassword = async () => {
-    if (resetDialog.tempPassword) {
-      await navigator.clipboard.writeText(resetDialog.tempPassword);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
+  // (removed: temp password copy — reset now delivers a recovery email instead)
+
+
 
   const handleAddOwner = async () => {
     if (!ownerEmail.trim() || !addOwnerDialog.orgId) return;
