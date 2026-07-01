@@ -86,6 +86,43 @@ Deno.serve(async (req) => {
       formattedPhone = `254${formattedPhone}`;
     }
 
+    // Rate-limit STK pushes (prevents harassment: unlimited prompts to a victim's phone).
+    // Uses service-role client so the SECURITY DEFINER RPC is callable.
+    const adminClient = createClient(
+      supabaseUrl,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+    const { data: rl, error: rlErr } = await adminClient.rpc("check_mpesa_stk_rate_limit", {
+      _user_id: user.id,
+      _phone: formattedPhone,
+    });
+    if (rlErr) {
+      console.error("Rate limit check failed:", rlErr);
+      return new Response(
+        JSON.stringify({ success: false, error: "Payment request failed" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    if (rl && rl.allowed === false) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Too many STK push attempts. Please wait before trying again.",
+          retry_after_seconds: rl.retry_after_seconds ?? 60,
+        }),
+        {
+          status: 429,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+            "Retry-After": String(rl.retry_after_seconds ?? 60),
+          },
+        }
+      );
+    }
+
+
+
     // Load per-org M-Pesa config (falls back to sandbox defaults)
     const { data: org } = await supabase
       .from("organizations")

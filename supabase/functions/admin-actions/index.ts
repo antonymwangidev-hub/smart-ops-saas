@@ -93,14 +93,36 @@ Deno.serve(async (req) => {
           status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const tempPassword = crypto.randomUUID().slice(0, 12) + "Aa1!";
-      const { error: updateError } = await adminClient.auth.admin.updateUserById(user_id, { password: tempPassword });
-      if (updateError) throw updateError;
+      // Send a password-recovery email via Supabase Auth instead of returning a temp
+      // password in the response body (avoids leaking secrets to dev tools / proxy logs).
+      const { error: linkError } = await adminClient.auth.admin.generateLink({
+        type: "recovery",
+        email: userData.user.email,
+      });
+      if (linkError) throw linkError;
+
+      // Audit trail
+      await adminClient.from("activity_logs").insert({
+        organization_id: null,
+        user_id: user.id,
+        action: "password_reset_email_sent",
+        metadata: {
+          target_user_id: user_id,
+          target_email: userData.user.email,
+          triggered_by_email: user.email,
+        },
+      });
+
       return new Response(
-        JSON.stringify({ success: true, temp_password: tempPassword, email: userData.user.email }),
+        JSON.stringify({
+          success: true,
+          email: userData.user.email,
+          message: "A password reset email has been sent to the user.",
+        }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
 
     if (action === "list_users") {
       if (!(await checkPlatformAdmin())) {
@@ -202,10 +224,11 @@ Deno.serve(async (req) => {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      // Find user by email
-      const { data: usersData } = await adminClient.auth.admin.listUsers({ perPage: 1000 });
-      const targetUser = usersData?.users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
+      // Fast lookup via SECURITY DEFINER RPC (O(1) instead of paginated listUsers)
+      const { data: found } = await adminClient.rpc("find_user_by_email", { _email: email });
+      const targetUser = Array.isArray(found) && found.length > 0 ? found[0] : null;
       if (!targetUser) {
+
         return new Response(JSON.stringify({ error: "No account found with that email. They must sign up first." }), {
           status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -277,10 +300,11 @@ Deno.serve(async (req) => {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      // Find user by email
-      const { data: usersData } = await adminClient.auth.admin.listUsers({ perPage: 1000 });
-      const targetUser = usersData?.users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
+      // Fast lookup via SECURITY DEFINER RPC (O(1) instead of paginated listUsers)
+      const { data: found } = await adminClient.rpc("find_user_by_email", { _email: email });
+      const targetUser = Array.isArray(found) && found.length > 0 ? found[0] : null;
       if (!targetUser) {
+
         return new Response(JSON.stringify({ error: "No account found with that email. They must sign up first." }), {
           status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
