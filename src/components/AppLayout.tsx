@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PresenceIndicator } from "@/components/PresenceIndicator";
+import { RealtimeStatusIndicator } from "@/components/RealtimeStatusIndicator";
 import { usePresence } from "@/hooks/usePresence";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -126,6 +127,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
               </div>
             )}
 
+            <RealtimeStatusIndicator compact={isMobile} />
             <ThemeToggle />
           </header>
 
