@@ -443,9 +443,10 @@ Deno.serve(async (req) => {
         });
       }
       const token = randomToken();
+      const token_hash = await sha256Hex(token);
       const { data: updated, error: updErr } = await adminClient.from("staff_invitations")
         .update({
-          token,
+          token_hash,
           status: "pending",
           invitation_sent_at: new Date().toISOString(),
           expires_at: new Date(Date.now() + 14 * 86400_000).toISOString(),
