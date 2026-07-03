@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRealtimeChannel } from "@/hooks/useRealtimeChannel";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,13 +33,18 @@ export default function Notifications() {
 
   useEffect(() => { fetchNotifications(); }, [user]);
 
-  useEffect(() => {
-    if (!user) return;
-    const channel = supabase.channel(`user:${user.id}:notifications-realtime`)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` }, () => fetchNotifications())
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [user]);
+  const notifFilter = useMemo(
+    () => user
+      ? { event: "INSERT" as const, schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` }
+      : null,
+    [user?.id],
+  );
+  useRealtimeChannel({
+    channelName: user ? `user:${user.id}:notifications-realtime` : "notifications-idle",
+    filter: notifFilter,
+    onChange: () => fetchNotifications(),
+  });
+
 
   const markRead = async (id: string) => {
     await supabase.from("notifications").update({ is_read: true }).eq("id", id);

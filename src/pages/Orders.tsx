@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/contexts/OrgContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRealtimeChannel } from "@/hooks/useRealtimeChannel";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -117,16 +118,18 @@ export default function Orders() {
   const customers = customersList || [];
   const products = productsList || [];
 
-  // Realtime subscription
-  useEffect(() => {
-    if (!currentOrg) return;
-    const channel = supabase.channel(`org:${currentOrg.id}:orders-realtime`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "orders", filter: `organization_id=eq.${currentOrg.id}` }, () => {
-        queryClient.invalidateQueries({ queryKey: ["orders", currentOrg.id] });
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [currentOrg, queryClient]);
+  // Realtime subscription — status/reconnect handled by useRealtimeChannel.
+  const ordersFilter = useMemo(
+    () => currentOrg
+      ? { event: "*" as const, schema: "public", table: "orders", filter: `organization_id=eq.${currentOrg.id}` }
+      : null,
+    [currentOrg?.id],
+  );
+  useRealtimeChannel({
+    channelName: currentOrg ? `org:${currentOrg.id}:orders-realtime` : "orders-idle",
+    filter: ordersFilter,
+    onChange: () => queryClient.invalidateQueries({ queryKey: ["orders", currentOrg?.id] }),
+  });
 
   // Auto-compute amount from line items
   const computedAmount = lineItems.reduce((sum, i) => sum + i.quantity * i.unit_price, 0);

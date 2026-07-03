@@ -1,8 +1,9 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/contexts/OrgContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRealtimeChannel } from "@/hooks/useRealtimeChannel";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -80,15 +81,17 @@ export default function Tasks() {
   const totalCount = tasksData?.count || 0;
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
-  useEffect(() => {
-    if (!currentOrg) return;
-    const channel = supabase.channel(`org:${currentOrg.id}:tasks-realtime`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "tasks", filter: `organization_id=eq.${currentOrg.id}` }, () =>
-        queryClient.invalidateQueries({ queryKey: ["tasks", currentOrg.id] })
-      )
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [currentOrg, queryClient]);
+  const tasksFilter = useMemo(
+    () => currentOrg
+      ? { event: "*" as const, schema: "public", table: "tasks", filter: `organization_id=eq.${currentOrg.id}` }
+      : null,
+    [currentOrg?.id],
+  );
+  useRealtimeChannel({
+    channelName: currentOrg ? `org:${currentOrg.id}:tasks-realtime` : "tasks-idle",
+    filter: tasksFilter,
+    onChange: () => queryClient.invalidateQueries({ queryKey: ["tasks", currentOrg?.id] }),
+  });
 
   // Trigger AI when title has 5+ chars
   useEffect(() => {
