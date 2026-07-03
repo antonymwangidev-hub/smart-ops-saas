@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { OrgProvider } from "@/contexts/OrgContext";
+import { RealtimeStatusProvider } from "@/contexts/RealtimeStatusContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -101,6 +102,7 @@ const App = () => (
             <BrowserRouter>
               <AuthProvider>
                 <OrgProvider>
+                  <RealtimeStatusProvider>
                   <Suspense fallback={<PageLoader />}>
                     <Routes>
                       {/* ── Public ── */}
@@ -171,6 +173,7 @@ const App = () => (
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </Suspense>
+                  </RealtimeStatusProvider>
                 </OrgProvider>
               </AuthProvider>
             </BrowserRouter>
