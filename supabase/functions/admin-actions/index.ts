@@ -374,6 +374,11 @@ Deno.serve(async (req) => {
       return Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
     };
 
+    const sha256Hex = async (input: string) => {
+      const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
+      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+    };
+
     const buildInviteLink = (token: string) => {
       const origin = body.app_origin || req.headers.get("origin") || "";
       return `${origin}/invite/${token}`;
@@ -399,6 +404,7 @@ Deno.serve(async (req) => {
         .eq("status", "pending");
 
       const token = randomToken();
+      const token_hash = await sha256Hex(token);
       const { data: inv, error: invErr } = await adminClient.from("staff_invitations").insert({
         organization_id: org_id,
         email: email.trim().toLowerCase(),
@@ -406,7 +412,7 @@ Deno.serve(async (req) => {
         phone: phone || null,
         role,
         branch_id: branch_id || null,
-        token,
+        token_hash,
         invited_by: user.id,
       }).select().single();
       if (invErr) throw invErr;
@@ -437,9 +443,10 @@ Deno.serve(async (req) => {
         });
       }
       const token = randomToken();
+      const token_hash = await sha256Hex(token);
       const { data: updated, error: updErr } = await adminClient.from("staff_invitations")
         .update({
-          token,
+          token_hash,
           status: "pending",
           invitation_sent_at: new Date().toISOString(),
           expires_at: new Date(Date.now() + 14 * 86400_000).toISOString(),

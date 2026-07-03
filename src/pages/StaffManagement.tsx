@@ -42,7 +42,7 @@ interface Invitation {
   role: string;
   branch_id: string | null;
   status: string;
-  token: string;
+  
   expires_at: string;
   invitation_sent_at: string;
 }
@@ -471,7 +471,6 @@ export default function StaffManagement() {
                       </TableHeader>
                       <TableBody>
                         {invitations.map((inv) => {
-                          const link = `${window.location.origin}/invite/${inv.token}`;
                           return (
                             <TableRow key={inv.id}>
                               <TableCell className="font-medium">{inv.email}</TableCell>
@@ -481,13 +480,8 @@ export default function StaffManagement() {
                               <TableCell className="text-muted-foreground text-sm">{new Date(inv.expires_at).toLocaleDateString()}</TableCell>
                               <TableCell className="text-right">
                                 <div className="flex items-center justify-end gap-1">
-                                  {inv.status === "pending" && (
-                                    <Button size="sm" variant="ghost" onClick={() => copyLink(link)} title="Copy link">
-                                      <Copy className="h-3.5 w-3.5" />
-                                    </Button>
-                                  )}
                                   {inv.status !== "accepted" && (
-                                    <Button size="sm" variant="ghost" onClick={() => handleResend(inv)} title="Resend / regenerate">
+                                    <Button size="sm" variant="ghost" onClick={() => handleResend(inv)} title="Resend / regenerate link">
                                       <RefreshCw className="h-3.5 w-3.5" />
                                     </Button>
                                   )}
