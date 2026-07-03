@@ -404,6 +404,7 @@ Deno.serve(async (req) => {
         .eq("status", "pending");
 
       const token = randomToken();
+      const token_hash = await sha256Hex(token);
       const { data: inv, error: invErr } = await adminClient.from("staff_invitations").insert({
         organization_id: org_id,
         email: email.trim().toLowerCase(),
@@ -411,7 +412,7 @@ Deno.serve(async (req) => {
         phone: phone || null,
         role,
         branch_id: branch_id || null,
-        token,
+        token_hash,
         invited_by: user.id,
       }).select().single();
       if (invErr) throw invErr;
