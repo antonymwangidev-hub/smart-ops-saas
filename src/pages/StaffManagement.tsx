@@ -42,7 +42,7 @@ interface Invitation {
   role: string;
   branch_id: string | null;
   status: string;
-  token: string;
+  
   expires_at: string;
   invitation_sent_at: string;
 }
