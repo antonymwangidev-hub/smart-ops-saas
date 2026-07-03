@@ -374,6 +374,11 @@ Deno.serve(async (req) => {
       return Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
     };
 
+    const sha256Hex = async (input: string) => {
+      const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
+      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+    };
+
     const buildInviteLink = (token: string) => {
       const origin = body.app_origin || req.headers.get("origin") || "";
       return `${origin}/invite/${token}`;
