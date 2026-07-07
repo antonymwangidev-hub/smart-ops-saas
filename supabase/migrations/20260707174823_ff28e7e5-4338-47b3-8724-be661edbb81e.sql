@@ -1,0 +1,1 @@
+ALTER VIEW public.product_next_batch SET (security_invoker = true);
