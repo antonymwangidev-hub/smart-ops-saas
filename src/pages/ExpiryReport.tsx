@@ -15,7 +15,7 @@ import { useCurrency } from "@/contexts/CurrencyContext";
 
 export default function ExpiryReport() {
   const { currentOrg } = useOrg();
-  const { format: fmtMoney } = useCurrency();
+  const { formatAmount: fmtMoney } = useCurrency();
 
   const { data: batches = [], isLoading } = useQuery({
     queryKey: ["expiry_report", currentOrg?.id],
