@@ -41,6 +41,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "Inventory", icon: Boxes, items: [
       { title: "Products", url: "/products", icon: Package, minRole: "storekeeper" },
+      { title: "Batches & Expiry", url: "/batches", icon: ClipboardCheck, minRole: "storekeeper" },
       { title: "Stock Take", url: "/stock-take", icon: ClipboardCheck, minRole: "storekeeper" },
       { title: "Suppliers", url: "/suppliers", icon: Truck, minRole: "storekeeper" },
       { title: "Purchase Orders", url: "/purchases", icon: ClipboardList, minRole: "storekeeper" },
@@ -64,6 +65,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "Reports", icon: BarChart3, items: [
       { title: "Analytics", url: "/analytics", icon: BarChart3, minRole: "staff" },
+      { title: "Expiry Report", url: "/reports/expiry", icon: AlertCircle, minRole: "staff" },
       { title: "Documents", url: "/documents", icon: FileText, minRole: "staff" },
     ],
   },
