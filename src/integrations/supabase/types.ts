@@ -268,34 +268,55 @@ export type Database = {
       }
       customers: {
         Row: {
+          business_name: string | null
+          county: string | null
           created_at: string
+          credit_limit: number
           email: string | null
+          farmer_type: Database["public"]["Enums"]["farmer_type"] | null
           id: string
+          kra_pin: string | null
           name: string
           notes: string | null
           organization_id: string
           phone: string | null
+          sub_county: string | null
           updated_at: string
+          village: string | null
         }
         Insert: {
+          business_name?: string | null
+          county?: string | null
           created_at?: string
+          credit_limit?: number
           email?: string | null
+          farmer_type?: Database["public"]["Enums"]["farmer_type"] | null
           id?: string
+          kra_pin?: string | null
           name: string
           notes?: string | null
           organization_id: string
           phone?: string | null
+          sub_county?: string | null
           updated_at?: string
+          village?: string | null
         }
         Update: {
+          business_name?: string | null
+          county?: string | null
           created_at?: string
+          credit_limit?: number
           email?: string | null
+          farmer_type?: Database["public"]["Enums"]["farmer_type"] | null
           id?: string
+          kra_pin?: string | null
           name?: string
           notes?: string | null
           organization_id?: string
           phone?: string | null
+          sub_county?: string | null
           updated_at?: string
+          village?: string | null
         }
         Relationships: [
           {
@@ -750,31 +771,46 @@ export type Database = {
       }
       organizations: {
         Row: {
+          business_type: Database["public"]["Enums"]["business_type"]
+          county: string | null
           created_at: string
           id: string
           is_active: boolean
+          kra_pin: string | null
           mpesa_account_reference: string | null
           mpesa_shortcode: string | null
           mpesa_shortcode_type: string
           name: string
+          physical_address: string | null
+          vat_registered: boolean
         }
         Insert: {
+          business_type?: Database["public"]["Enums"]["business_type"]
+          county?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
+          kra_pin?: string | null
           mpesa_account_reference?: string | null
           mpesa_shortcode?: string | null
           mpesa_shortcode_type?: string
           name: string
+          physical_address?: string | null
+          vat_registered?: boolean
         }
         Update: {
+          business_type?: Database["public"]["Enums"]["business_type"]
+          county?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
+          kra_pin?: string | null
           mpesa_account_reference?: string | null
           mpesa_shortcode?: string | null
           mpesa_shortcode_type?: string
           name?: string
+          physical_address?: string | null
+          vat_registered?: boolean
         }
         Relationships: []
       }
@@ -813,6 +849,92 @@ export type Database = {
           id?: string
         }
         Relationships: []
+      }
+      product_batches: {
+        Row: {
+          batch_number: string
+          created_at: string
+          expiry_date: string | null
+          id: string
+          manufacturing_date: string | null
+          notes: string | null
+          organization_id: string
+          product_id: string
+          purchase_order_id: string | null
+          quantity_received: number
+          quantity_remaining: number
+          received_at: string
+          storage_location: string | null
+          supplier_id: string | null
+          unit_cost: number
+          updated_at: string
+        }
+        Insert: {
+          batch_number: string
+          created_at?: string
+          expiry_date?: string | null
+          id?: string
+          manufacturing_date?: string | null
+          notes?: string | null
+          organization_id: string
+          product_id: string
+          purchase_order_id?: string | null
+          quantity_received?: number
+          quantity_remaining?: number
+          received_at?: string
+          storage_location?: string | null
+          supplier_id?: string | null
+          unit_cost?: number
+          updated_at?: string
+        }
+        Update: {
+          batch_number?: string
+          created_at?: string
+          expiry_date?: string | null
+          id?: string
+          manufacturing_date?: string | null
+          notes?: string | null
+          organization_id?: string
+          product_id?: string
+          purchase_order_id?: string | null
+          quantity_received?: number
+          quantity_remaining?: number
+          received_at?: string
+          storage_location?: string | null
+          supplier_id?: string | null
+          unit_cost?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_batches_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_batches_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_batches_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_batches_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       product_brands: {
         Row: {
@@ -881,16 +1003,25 @@ export type Database = {
           description: string | null
           expiry_date: string | null
           id: string
+          image_url: string | null
           is_active: boolean
           low_stock_threshold: number
+          manufacturer: string | null
+          manufacturing_date: string | null
           name: string
           organization_id: string
+          pack_size: string | null
           price: number
+          reorder_level: number | null
           sku: string | null
           stock_quantity: number
+          storage_location: string | null
+          supplier_id: string | null
           tax_rate: number
           unit_of_measure: string
           updated_at: string
+          vat_category: Database["public"]["Enums"]["vat_category"]
+          wholesale_price: number | null
         }
         Insert: {
           barcode?: string | null
@@ -904,16 +1035,25 @@ export type Database = {
           description?: string | null
           expiry_date?: string | null
           id?: string
+          image_url?: string | null
           is_active?: boolean
           low_stock_threshold?: number
+          manufacturer?: string | null
+          manufacturing_date?: string | null
           name: string
           organization_id: string
+          pack_size?: string | null
           price?: number
+          reorder_level?: number | null
           sku?: string | null
           stock_quantity?: number
+          storage_location?: string | null
+          supplier_id?: string | null
           tax_rate?: number
           unit_of_measure?: string
           updated_at?: string
+          vat_category?: Database["public"]["Enums"]["vat_category"]
+          wholesale_price?: number | null
         }
         Update: {
           barcode?: string | null
@@ -927,16 +1067,25 @@ export type Database = {
           description?: string | null
           expiry_date?: string | null
           id?: string
+          image_url?: string | null
           is_active?: boolean
           low_stock_threshold?: number
+          manufacturer?: string | null
+          manufacturing_date?: string | null
           name?: string
           organization_id?: string
+          pack_size?: string | null
           price?: number
+          reorder_level?: number | null
           sku?: string | null
           stock_quantity?: number
+          storage_location?: string | null
+          supplier_id?: string | null
           tax_rate?: number
           unit_of_measure?: string
           updated_at?: string
+          vat_category?: Database["public"]["Enums"]["vat_category"]
+          wholesale_price?: number | null
         }
         Relationships: [
           {
@@ -951,6 +1100,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
         ]
@@ -1623,11 +1779,16 @@ export type Database = {
       suppliers: {
         Row: {
           address: string | null
+          avg_delivery_days: number | null
           contact_person: string | null
+          county: string | null
           created_at: string
+          credit_terms_days: number
           email: string | null
           id: string
           is_active: boolean
+          is_preferred: boolean
+          kra_pin: string | null
           name: string
           notes: string | null
           organization_id: string
@@ -1638,11 +1799,16 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          avg_delivery_days?: number | null
           contact_person?: string | null
+          county?: string | null
           created_at?: string
+          credit_terms_days?: number
           email?: string | null
           id?: string
           is_active?: boolean
+          is_preferred?: boolean
+          kra_pin?: string | null
           name: string
           notes?: string | null
           organization_id: string
@@ -1653,11 +1819,16 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          avg_delivery_days?: number | null
           contact_person?: string | null
+          county?: string | null
           created_at?: string
+          credit_terms_days?: number
           email?: string | null
           id?: string
           is_active?: boolean
+          is_preferred?: boolean
+          kra_pin?: string | null
           name?: string
           notes?: string | null
           organization_id?: string
@@ -1848,7 +2019,33 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      product_next_batch: {
+        Row: {
+          batch_id: string | null
+          batch_number: string | null
+          expiry_date: string | null
+          organization_id: string | null
+          product_id: string | null
+          quantity_remaining: number | null
+          unit_cost: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_batches_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_batches_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       accept_invitation: { Args: { _token: string }; Returns: Json }
@@ -1918,8 +2115,25 @@ export type Database = {
         | "cashier"
         | "storekeeper"
         | "accountant"
+      business_type:
+        | "agrovet"
+        | "hardware"
+        | "pharmacy"
+        | "retail"
+        | "wholesale"
+        | "other"
+      farmer_type:
+        | "dairy"
+        | "poultry"
+        | "beef"
+        | "goat"
+        | "pig"
+        | "crop"
+        | "mixed"
+        | "other"
       order_status: "pending" | "completed" | "cancelled"
       task_status: "todo" | "in_progress" | "done"
+      vat_category: "standard" | "exempt" | "zero_rated"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2056,8 +2270,27 @@ export const Constants = {
         "storekeeper",
         "accountant",
       ],
+      business_type: [
+        "agrovet",
+        "hardware",
+        "pharmacy",
+        "retail",
+        "wholesale",
+        "other",
+      ],
+      farmer_type: [
+        "dairy",
+        "poultry",
+        "beef",
+        "goat",
+        "pig",
+        "crop",
+        "mixed",
+        "other",
+      ],
       order_status: ["pending", "completed", "cancelled"],
       task_status: ["todo", "in_progress", "done"],
+      vat_category: ["standard", "exempt", "zero_rated"],
     },
   },
 } as const

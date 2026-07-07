@@ -1,81 +1,65 @@
-# Staff Invitation & RBAC Upgrade
+# SmartOps → Agrovet OS Transformation Plan
 
-Build a complete invitation-based onboarding flow on top of the existing org/role system, without breaking current logins or the `organization_members.role` enum already wired into RLS.
+This is a large, multi-week transformation. I'll deliver it in **reviewable phases** rather than one giant unreviewable dump. Each phase is shippable and preserves all existing functionality.
 
-## Approach
+## Audit Summary (current state)
 
-Keep the existing `organization_members` table + `app_role` enum as the source of truth for org membership/role (everything in RLS already depends on it). Layer on:
-- **Invitations table** for the pending → accepted lifecycle.
-- **Permissions catalog** (`permissions`, `role_permissions`) keyed by `app_role` for fine-grained UI/route gating, with optional custom roles later.
-- **Edge functions** for secure invite send + accept (uses service-role to create the auth user + membership atomically).
-- **Email** via Lovable's built-in transactional email (scaffold if not present).
+**Works well**
+- Multi-tenant RLS, org/role model, sidebar groups (recently refactored), Dashboard v3 with KPIs/AI/alerts, POS + Credit Sales + Returns, Purchase Orders + Supplier Payments (with balance triggers), Stock Transfers, M-Pesa STK, Realtime + presence, offline sync scaffolding.
 
-## Database (migration)
+**Gaps vs. Agrovet target**
+1. **Products table** lacks: barcode, brand FK usage, batch/expiry, mfg date, storage location, VAT category, wholesale/retail split, pack size, unit of measure, reorder level (some exist, need to verify).
+2. **No batch tracking / FEFO** — critical for vet medicines & vaccines. No expiry alerts.
+3. **Customers** lack: county, sub-county, village, farmer_type, credit_limit surfacing.
+4. **Suppliers** lack: KRA PIN, credit terms, delivery performance metrics.
+5. **VAT** not modeled (16% standard / exempt / zero-rated).
+6. **Global search** is per-page only — no cross-entity command palette search by barcode/batch/invoice.
+7. **Reports** page is thin — missing near-expiry, slow-moving, margin, category performance.
+8. **AI Insights** exist on dashboard but no dedicated page with proactive scheduled recommendations.
+9. **Kenyan locale**: KES defaulted, but no county picker, no PIN field, no VAT-aware pricing.
+10. **Dashboard** already strong post-v3; needs expiry KPI, inventory value, supplier credit.
 
-1. `staff_invitations`
-   - `id, organization_id, email, full_name, phone, role app_role, branch_id, token (unique), invited_by, status (pending|accepted|revoked|expired), expires_at (now()+7d), accepted_at, accepted_user_id, created_at, updated_at`
-   - RLS: org admins/managers can select/insert/update; public can SELECT a single row by token via SECURITY DEFINER RPC only (no direct anon read).
-2. `permissions(key text pk, description text, category text)` — seed with the keys listed by user.
-3. `role_permissions(role app_role, permission_key text, PRIMARY KEY(role, permission_key))` — seed defaults per role.
-4. Extend `organization_members` with `status text default 'active'` (`active|suspended|pending_invitation`) and `branch_id uuid`.
-5. RPCs (SECURITY DEFINER):
-   - `get_invitation_by_token(_token text)` → returns org name, role, email, status, expires_at (no auth required).
-   - `accept_invitation(_token text)` → links `auth.uid()` to the invitation's org/role/branch, marks accepted, requires the JWT email to match.
-   - `user_permissions(_user_id uuid, _org_id uuid)` → returns set of permission keys for that user's role.
+## Phased Delivery
 
-## Edge functions
+### Phase 1 — Data model foundation (this turn)
+Additive migration. Zero breaking changes.
+- `products`: add `barcode`, `pack_size`, `unit_of_measure`, `wholesale_price`, `reorder_level`, `storage_location`, `vat_category` (enum: standard/exempt/zero), `manufacturer`, `image_url` (if missing).
+- New `product_batches` table: batch_number, mfg_date, expiry_date, quantity, cost, product_id, org_id, supplier_id, received_at. FEFO helper view.
+- `customers`: add `county`, `sub_county`, `village`, `farmer_type` (enum), `credit_limit`, `notes`.
+- `suppliers`: add `kra_pin`, `credit_terms_days`, `preferred` (bool), `notes` (verify existing).
+- `organizations`: add `business_type` (enum: agrovet, hardware, pharmacy, retail, wholesale) default `agrovet`, `kra_pin`, `vat_registered` bool.
+- Seed 5 default Agrovet categories if org.business_type=agrovet and none exist (Vet Medicines, Feeds, Seeds, Fertilizers, Pesticides).
+- Full GRANTs + additive only (no column drops, no NOT NULL on existing rows).
 
-- `invite-staff` (JWT-verified): admin/manager only → creates invitation row + token, sends email via `send-transactional-email`. Idempotent per `(org, email, pending)`.
-- `resend-invitation` (JWT): regenerates token + resends email.
-- Email template: `staff-invitation.tsx` registered in transactional registry. Link: `${SITE_URL}/invite/{token}`.
+### Phase 2 — Batch & expiry UX
+- Batches tab on Product detail; receive-into-batch during PO receive.
+- Near-expiry KPI on Dashboard (30/60/90) + Smart Alert.
+- Block sale of expired batches in POS; FEFO auto-selects oldest.
+- New Reports: Near Expiry, Expired.
 
-## Frontend
+### Phase 3 — Customers/Suppliers Kenyan fields
+- County/sub-county picker (Kenyan 47 counties list), farmer type, credit limit surfaced in POS.
+- Supplier KRA PIN, credit terms, delivery performance card.
 
-- `src/hooks/usePermissions.ts` — loads permission keys for current user/org from RPC, exposes `has(key)`.
-- `src/components/PermissionGate.tsx` — wraps menu items / sections.
-- Update `RoleRoute` to optionally accept `requiredPermission` and check via `usePermissions`.
-- Update `AppSidebar` to filter by permissions (keep role-level fallback).
-- `src/pages/InviteAccept.tsx` (public route `/invite/:token`):
-   - Reads invite via RPC.
-   - If signed-out & no auth user with that email: show signup form (email pre-filled, locked) → `supabase.auth.signUp` with redirect → on session → call `accept_invitation` RPC.
-   - If signed-in with matching email: just call `accept_invitation`.
-   - On success: toast + redirect to `/pos`.
-- Update `StaffManagement.tsx`:
-   - Add "Invite Staff" dialog (name/email/phone/role/branch).
-   - Table columns Name / Email / Role / Branch / Status with badges + actions (Resend, Edit Role, Change Branch, Suspend, Reactivate).
-   - Top stats: Active / Pending / Suspended counts.
-- Add `/invite/:token` route in `App.tsx` (outside `PrivateRoute`).
+### Phase 4 — Reports hub
+- Dedicated `/reports` index with: Daily/Weekly/Monthly Sales, Profit, Inventory Valuation, Low Stock, Near Expiry, Category Performance, Slow Movers, Margin Analysis, Supplier Performance, Customer Trends, Credit Aging.
 
-## Permission seed (defaults)
+### Phase 5 — AI Insights page + global command search
+- `/ai-insights` dedicated page with scheduled proactive recommendations (extend `smart-alerts-engine` edge fn).
+- Command Palette (⌘K) searching products by name/SKU/barcode, customers, suppliers, orders, invoices, batches.
 
-- Owner/admin: all keys.
-- Manager: dashboard, inventory.*, sales.*, reports.view, staff.view, customers.*.
-- Cashier: dashboard.view, sales.view, sales.create, customers.view.
-- Inventory clerk → mapped to `storekeeper`: dashboard.view, inventory.*, suppliers.*, purchases.*.
+### Phase 6 — VAT + polish
+- VAT-aware pricing in POS receipt (16% standard, exempt shown).
+- Kenyan phone normalization already exists — audit + surface PIN field on org settings.
+- UX pass: spacing, typography, empty states, mobile.
 
-## Non-goals (kept compatible)
+### Future-ready (architecture only, no UI now)
+- Reserve enum values / nullable FKs for: clinic visits, loyalty points, deliveries, accounting entries, payroll, WhatsApp templates, customer/supplier portals, e-commerce SKUs.
 
-- Don't change existing `app_role` enum values or RLS policies that depend on them.
-- Don't replace `organization_members` — invitation accept inserts into it.
-- Auth still uses Supabase Auth email/password; we just bootstrap via invitation token.
+## Technical notes
+- All migrations are additive; existing code paths keep working because new columns are nullable with sensible defaults.
+- `business_type` on org gates Agrovet-specific UI (batch tab, expiry KPIs) without hiding features for non-agrovet tenants.
+- No KRA API integration — only PIN storage + VAT categorization ready.
 
-## Files
-
-**Created**
-- `supabase/migrations/<ts>_staff_invitations_rbac.sql`
-- `supabase/functions/invite-staff/index.ts`
-- `supabase/functions/resend-invitation/index.ts`
-- `supabase/functions/_shared/transactional-email-templates/staff-invitation.tsx`
-- `src/pages/InviteAccept.tsx`
-- `src/hooks/usePermissions.ts`
-- `src/components/PermissionGate.tsx`
-
-**Edited**
-- `src/App.tsx` (add `/invite/:token`)
-- `src/components/RoleRoute.tsx` (permission support)
-- `src/components/AppSidebar.tsx` (permission filtering)
-- `src/pages/StaffManagement.tsx` (invite UI + status/actions + stats)
-- `supabase/functions/_shared/transactional-email-templates/registry.ts` (register template)
-- `supabase/config.toml` (register new functions if needed)
-
-Reply **go** to build, or tell me which parts to trim.
+## What I'll do next
+Proceed with **Phase 1 migration only** on your approval. After it lands and types regenerate, I'll ship Phase 2 UI. Reply "go" to start, or tell me to reorder / skip phases.
