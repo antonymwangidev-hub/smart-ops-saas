@@ -68,7 +68,11 @@ export default function Suppliers() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Supplier | null>(null);
-  const [form, setForm] = useState({ name: "", contact_person: "", phone: "", email: "", address: "", payment_terms: "Net 30", notes: "" });
+  const [form, setForm] = useState({
+    name: "", contact_person: "", phone: "", email: "", address: "",
+    payment_terms: "Net 30", notes: "",
+    kra_pin: "", credit_terms_days: "30", is_preferred: false, county: "",
+  });
   const [tab, setTab] = useState("suppliers");
 
   // LPO creation state
