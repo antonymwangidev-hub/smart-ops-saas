@@ -110,19 +110,50 @@ export default function Suppliers() {
 
   const resetForm = () => {
     setEditing(null);
-    setForm({ name: "", contact_person: "", phone: "", email: "", address: "", payment_terms: "Net 30", notes: "" });
+    setForm({
+      name: "", contact_person: "", phone: "", email: "", address: "",
+      payment_terms: "Net 30", notes: "",
+      kra_pin: "", credit_terms_days: "30", is_preferred: false, county: "",
+    });
   };
 
   const startEdit = (s: Supplier) => {
     setEditing(s);
-    setForm({ name: s.name, contact_person: s.contact_person || "", phone: s.phone || "", email: s.email || "", address: s.address || "", payment_terms: s.payment_terms || "Net 30", notes: s.notes || "" });
+    setForm({
+      name: s.name,
+      contact_person: s.contact_person || "",
+      phone: s.phone || "",
+      email: s.email || "",
+      address: s.address || "",
+      payment_terms: s.payment_terms || "Net 30",
+      notes: s.notes || "",
+      kra_pin: s.kra_pin || "",
+      credit_terms_days: s.credit_terms_days != null ? String(s.credit_terms_days) : "30",
+      is_preferred: !!s.is_preferred,
+      county: s.county || "",
+    });
     setOpen(true);
   };
 
   const save = useMutation({
     mutationFn: async () => {
       if (!currentOrg || !form.name.trim()) throw new Error("Name required");
-      const payload = { name: form.name, contact_person: form.contact_person || null, phone: form.phone || null, email: form.email || null, address: form.address || null, payment_terms: form.payment_terms || null, notes: form.notes || null };
+      if (form.kra_pin && !isValidKraPin(form.kra_pin)) {
+        throw new Error("KRA PIN must look like P123456789Z");
+      }
+      const payload: any = {
+        name: form.name,
+        contact_person: form.contact_person || null,
+        phone: form.phone || null,
+        email: form.email || null,
+        address: form.address || null,
+        payment_terms: form.payment_terms || null,
+        notes: form.notes || null,
+        kra_pin: form.kra_pin ? form.kra_pin.toUpperCase() : null,
+        credit_terms_days: form.credit_terms_days ? Number(form.credit_terms_days) : null,
+        is_preferred: form.is_preferred,
+        county: form.county || null,
+      };
       if (editing) {
         const { error } = await (supabase as any).from("suppliers").update(payload).eq("id", editing.id);
         if (error) throw error;
