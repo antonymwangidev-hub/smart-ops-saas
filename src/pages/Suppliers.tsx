@@ -312,9 +312,17 @@ export default function Suppliers() {
                         {suppliers.map((s) => (
                           <TableRow key={s.id}>
                             <TableCell>
-                              <div className="font-medium">{s.name}</div>
+                              <div className="font-medium flex items-center gap-1.5">
+                                {s.name}
+                                {s.is_preferred && <Star className="h-3.5 w-3.5 fill-warning text-warning" aria-label="Preferred" />}
+                              </div>
                               {s.contact_person && <div className="text-xs text-muted-foreground">{s.contact_person}</div>}
-                              {s.address && <div className="text-xs text-muted-foreground">{s.address}</div>}
+                              {(s.county || s.address) && (
+                                <div className="text-xs text-muted-foreground">
+                                  {[s.county, s.address].filter(Boolean).join(" · ")}
+                                </div>
+                              )}
+                              {s.kra_pin && <div className="text-[10px] text-muted-foreground font-mono">PIN: {s.kra_pin}</div>}
                             </TableCell>
                             <TableCell>
                               <div className="text-xs space-y-0.5">
