@@ -18,8 +18,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import {
   Truck, Plus, Loader2, Phone, Mail, FileText, Download,
-  AlertTriangle, CheckCircle2, Clock, DollarSign,
+  AlertTriangle, CheckCircle2, Clock, DollarSign, Star,
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { KENYA_COUNTIES, isValidKraPin } from "@/lib/kenya";
 
 interface Supplier {
   id: string;
