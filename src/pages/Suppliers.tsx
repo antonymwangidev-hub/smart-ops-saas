@@ -420,17 +420,45 @@ export default function Suppliers() {
                 <div><Label>Phone</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
               </div>
               <div><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
-              <div><Label>Address / Town</Label><Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>County</Label>
+                  <Select value={form.county} onValueChange={(v) => setForm({ ...form, county: v })}>
+                    <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectContent className="max-h-72">
+                      {KENYA_COUNTIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div><Label>Address / Town</Label><Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Payment Terms</Label>
+                  <Select value={form.payment_terms} onValueChange={(v) => setForm({ ...form, payment_terms: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {["Cash on Delivery", "Net 7", "Net 14", "Net 30", "Net 45", "Net 60", "Net 90"].map((t) => (
+                        <SelectItem key={t} value={t}>{t}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Credit Days</Label>
+                  <Input type="number" min="0" step="1" value={form.credit_terms_days} onChange={(e) => setForm({ ...form, credit_terms_days: e.target.value })} />
+                </div>
+              </div>
               <div>
-                <Label>Payment Terms</Label>
-                <Select value={form.payment_terms} onValueChange={(v) => setForm({ ...form, payment_terms: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {["Cash on Delivery", "Net 7", "Net 14", "Net 30", "Net 45", "Net 60", "Net 90"].map((t) => (
-                      <SelectItem key={t} value={t}>{t}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>KRA PIN <span className="text-muted-foreground text-xs">(optional, e.g. P123456789Z)</span></Label>
+                <Input value={form.kra_pin} onChange={(e) => setForm({ ...form, kra_pin: e.target.value.toUpperCase() })} maxLength={11} />
+              </div>
+              <div className="flex items-center justify-between rounded-lg border p-3">
+                <div>
+                  <Label className="cursor-pointer">Preferred supplier</Label>
+                  <p className="text-xs text-muted-foreground">Highlighted in ordering suggestions</p>
+                </div>
+                <Switch checked={form.is_preferred} onCheckedChange={(v) => setForm({ ...form, is_preferred: v })} />
               </div>
               <div><Label>Notes</Label><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} /></div>
               <Button onClick={() => save.mutate()} disabled={save.isPending} className="w-full">
