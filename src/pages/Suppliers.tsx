@@ -35,6 +35,11 @@ interface Supplier {
   outstanding_balance: number;
   is_active: boolean;
   created_at: string;
+  kra_pin?: string | null;
+  credit_terms_days?: number | null;
+  is_preferred?: boolean | null;
+  county?: string | null;
+  avg_delivery_days?: number | null;
 }
 
 // Parse payment terms string into days: "Net 30" -> 30, "60 days" -> 60, etc.
