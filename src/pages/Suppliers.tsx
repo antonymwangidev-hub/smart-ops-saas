@@ -18,8 +18,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import {
   Truck, Plus, Loader2, Phone, Mail, FileText, Download,
-  AlertTriangle, CheckCircle2, Clock, DollarSign,
+  AlertTriangle, CheckCircle2, Clock, DollarSign, Star,
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { KENYA_COUNTIES, isValidKraPin } from "@/lib/kenya";
 
 interface Supplier {
   id: string;
@@ -33,6 +35,11 @@ interface Supplier {
   outstanding_balance: number;
   is_active: boolean;
   created_at: string;
+  kra_pin?: string | null;
+  credit_terms_days?: number | null;
+  is_preferred?: boolean | null;
+  county?: string | null;
+  avg_delivery_days?: number | null;
 }
 
 // Parse payment terms string into days: "Net 30" -> 30, "60 days" -> 60, etc.
@@ -61,7 +68,11 @@ export default function Suppliers() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Supplier | null>(null);
-  const [form, setForm] = useState({ name: "", contact_person: "", phone: "", email: "", address: "", payment_terms: "Net 30", notes: "" });
+  const [form, setForm] = useState({
+    name: "", contact_person: "", phone: "", email: "", address: "",
+    payment_terms: "Net 30", notes: "",
+    kra_pin: "", credit_terms_days: "30", is_preferred: false, county: "",
+  });
   const [tab, setTab] = useState("suppliers");
 
   // LPO creation state
@@ -99,19 +110,50 @@ export default function Suppliers() {
 
   const resetForm = () => {
     setEditing(null);
-    setForm({ name: "", contact_person: "", phone: "", email: "", address: "", payment_terms: "Net 30", notes: "" });
+    setForm({
+      name: "", contact_person: "", phone: "", email: "", address: "",
+      payment_terms: "Net 30", notes: "",
+      kra_pin: "", credit_terms_days: "30", is_preferred: false, county: "",
+    });
   };
 
   const startEdit = (s: Supplier) => {
     setEditing(s);
-    setForm({ name: s.name, contact_person: s.contact_person || "", phone: s.phone || "", email: s.email || "", address: s.address || "", payment_terms: s.payment_terms || "Net 30", notes: s.notes || "" });
+    setForm({
+      name: s.name,
+      contact_person: s.contact_person || "",
+      phone: s.phone || "",
+      email: s.email || "",
+      address: s.address || "",
+      payment_terms: s.payment_terms || "Net 30",
+      notes: s.notes || "",
+      kra_pin: s.kra_pin || "",
+      credit_terms_days: s.credit_terms_days != null ? String(s.credit_terms_days) : "30",
+      is_preferred: !!s.is_preferred,
+      county: s.county || "",
+    });
     setOpen(true);
   };
 
   const save = useMutation({
     mutationFn: async () => {
       if (!currentOrg || !form.name.trim()) throw new Error("Name required");
-      const payload = { name: form.name, contact_person: form.contact_person || null, phone: form.phone || null, email: form.email || null, address: form.address || null, payment_terms: form.payment_terms || null, notes: form.notes || null };
+      if (form.kra_pin && !isValidKraPin(form.kra_pin)) {
+        throw new Error("KRA PIN must look like P123456789Z");
+      }
+      const payload: any = {
+        name: form.name,
+        contact_person: form.contact_person || null,
+        phone: form.phone || null,
+        email: form.email || null,
+        address: form.address || null,
+        payment_terms: form.payment_terms || null,
+        notes: form.notes || null,
+        kra_pin: form.kra_pin ? form.kra_pin.toUpperCase() : null,
+        credit_terms_days: form.credit_terms_days ? Number(form.credit_terms_days) : null,
+        is_preferred: form.is_preferred,
+        county: form.county || null,
+      };
       if (editing) {
         const { error } = await (supabase as any).from("suppliers").update(payload).eq("id", editing.id);
         if (error) throw error;
@@ -270,9 +312,17 @@ export default function Suppliers() {
                         {suppliers.map((s) => (
                           <TableRow key={s.id}>
                             <TableCell>
-                              <div className="font-medium">{s.name}</div>
+                              <div className="font-medium flex items-center gap-1.5">
+                                {s.name}
+                                {s.is_preferred && <Star className="h-3.5 w-3.5 fill-warning text-warning" aria-label="Preferred" />}
+                              </div>
                               {s.contact_person && <div className="text-xs text-muted-foreground">{s.contact_person}</div>}
-                              {s.address && <div className="text-xs text-muted-foreground">{s.address}</div>}
+                              {(s.county || s.address) && (
+                                <div className="text-xs text-muted-foreground">
+                                  {[s.county, s.address].filter(Boolean).join(" · ")}
+                                </div>
+                              )}
+                              {s.kra_pin && <div className="text-[10px] text-muted-foreground font-mono">PIN: {s.kra_pin}</div>}
                             </TableCell>
                             <TableCell>
                               <div className="text-xs space-y-0.5">
@@ -370,17 +420,45 @@ export default function Suppliers() {
                 <div><Label>Phone</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
               </div>
               <div><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
-              <div><Label>Address / Town</Label><Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>County</Label>
+                  <Select value={form.county} onValueChange={(v) => setForm({ ...form, county: v })}>
+                    <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectContent className="max-h-72">
+                      {KENYA_COUNTIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div><Label>Address / Town</Label><Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Payment Terms</Label>
+                  <Select value={form.payment_terms} onValueChange={(v) => setForm({ ...form, payment_terms: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {["Cash on Delivery", "Net 7", "Net 14", "Net 30", "Net 45", "Net 60", "Net 90"].map((t) => (
+                        <SelectItem key={t} value={t}>{t}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Credit Days</Label>
+                  <Input type="number" min="0" step="1" value={form.credit_terms_days} onChange={(e) => setForm({ ...form, credit_terms_days: e.target.value })} />
+                </div>
+              </div>
               <div>
-                <Label>Payment Terms</Label>
-                <Select value={form.payment_terms} onValueChange={(v) => setForm({ ...form, payment_terms: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {["Cash on Delivery", "Net 7", "Net 14", "Net 30", "Net 45", "Net 60", "Net 90"].map((t) => (
-                      <SelectItem key={t} value={t}>{t}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>KRA PIN <span className="text-muted-foreground text-xs">(optional, e.g. P123456789Z)</span></Label>
+                <Input value={form.kra_pin} onChange={(e) => setForm({ ...form, kra_pin: e.target.value.toUpperCase() })} maxLength={11} />
+              </div>
+              <div className="flex items-center justify-between rounded-lg border p-3">
+                <div>
+                  <Label className="cursor-pointer">Preferred supplier</Label>
+                  <p className="text-xs text-muted-foreground">Highlighted in ordering suggestions</p>
+                </div>
+                <Switch checked={form.is_preferred} onCheckedChange={(v) => setForm({ ...form, is_preferred: v })} />
               </div>
               <div><Label>Notes</Label><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} /></div>
               <Button onClick={() => save.mutate()} disabled={save.isPending} className="w-full">
