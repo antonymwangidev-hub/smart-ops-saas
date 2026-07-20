@@ -396,6 +396,28 @@ Deno.serve(async (req) => {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+      // Prevent role escalation: only admins can invite other admins.
+      // Managers may only invite roles strictly below their own rank.
+      const ROLE_RANK: Record<string, number> = {
+        admin: 100, manager: 80, accountant: 70, storekeeper: 65,
+        staff: 60, cashier: 50, attendant: 40,
+      };
+      const requestedRank = ROLE_RANK[role] ?? 0;
+      if (requestedRank === 0) {
+        return new Response(JSON.stringify({ error: "Invalid role" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const isAdmin = await checkOrgAdmin(org_id);
+      if (!isAdmin) {
+        // Caller is a manager (rank 80). Cannot invite admin or manager.
+        if (requestedRank >= 80) {
+          return new Response(JSON.stringify({ error: "Forbidden: cannot invite a role at or above your own rank" }), {
+            status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+
       // Revoke previous pending invites for same email
       await adminClient.from("staff_invitations")
         .update({ status: "revoked" })
