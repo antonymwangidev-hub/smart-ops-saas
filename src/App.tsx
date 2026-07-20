@@ -57,6 +57,7 @@ const StockTake      = lazy(() => import("./pages/StockTake"));
 const StockTransfers = lazy(() => import("./pages/StockTransfers"));
 const Batches       = lazy(() => import("./pages/Batches"));
 const ExpiryReport  = lazy(() => import("./pages/ExpiryReport"));
+const Reports       = lazy(() => import("./pages/Reports"));
 
 // ── Business ────────────────────────────────────────────────────────────
 const Dashboard      = lazy(() => import("./pages/Dashboard"));
@@ -159,6 +160,8 @@ const App = () => (
                         element={<PrivateRoute><RoleRoute requiredRole="staff"><StockTransfers /></RoleRoute></PrivateRoute>} />
                       <Route path="/batches"
                         element={<PrivateRoute><RoleRoute requiredRole="storekeeper"><Batches /></RoleRoute></PrivateRoute>} />
+                      <Route path="/reports"
+                        element={<PrivateRoute><RoleRoute requiredRole="staff"><Reports /></RoleRoute></PrivateRoute>} />
                       <Route path="/reports/expiry"
                         element={<PrivateRoute><RoleRoute requiredRole="staff"><ExpiryReport /></RoleRoute></PrivateRoute>} />
 

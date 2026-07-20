@@ -30,7 +30,7 @@ const ROLE_ROUTES: Record<OrgRole, string[]> = {
     "/suppliers", "/purchases", "/expenses", "/debtors",
     "/dashboard", "/customers", "/orders", "/tasks", "/automations",
     "/documents", "/analytics", "/notifications", "/settings",
-    "/stock-transfers", "/attendance",
+    "/stock-transfers", "/attendance", "/reports", "/reports/expiry",
   ],
   cashier: ["/pos", "/daily-summary", "/credit-sales", "/returns", "/attendance", "/notifications", "/settings"],
   attendant: ["/pos", "/daily-summary", "/attendance"],
