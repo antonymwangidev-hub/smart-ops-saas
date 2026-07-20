@@ -464,7 +464,7 @@ export default function Reports() {
                           <TableRow key={s.id}>
                             <TableCell className="font-medium">
                               {s.name}
-                              {s.preferred && <Badge variant="secondary" className="ml-2">Preferred</Badge>}
+                              {s.is_preferred && <Badge variant="secondary" className="ml-2">Preferred</Badge>}
                             </TableCell>
                             <TableCell className="text-right">{s.po_count}</TableCell>
                             <TableCell className="text-right">{s.received_count}</TableCell>
