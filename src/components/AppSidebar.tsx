@@ -64,6 +64,7 @@ const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: "Reports", icon: BarChart3, items: [
+      { title: "Reports Hub", url: "/reports", icon: BarChart3, minRole: "staff" },
       { title: "Analytics", url: "/analytics", icon: BarChart3, minRole: "staff" },
       { title: "Expiry Report", url: "/reports/expiry", icon: AlertCircle, minRole: "staff" },
       { title: "Documents", url: "/documents", icon: FileText, minRole: "staff" },
