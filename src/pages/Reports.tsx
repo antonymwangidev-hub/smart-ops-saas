@@ -77,7 +77,7 @@ export default function Reports() {
     queryFn: async () => {
       const { data: suppliers, error } = await supabase
         .from("suppliers")
-        .select("id, name, outstanding_balance, credit_terms_days, preferred")
+        .select("id, name, outstanding_balance, credit_terms_days, is_preferred")
         .eq("organization_id", orgId!);
       if (error) throw error;
 
