@@ -126,6 +126,7 @@ export default function InviteAccept() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
+      <h1 className="sr-only">Accept your SmartOps invitation</h1>
       <div className="w-full max-w-md animate-fade-in">
         <div className="flex items-center justify-center gap-2 mb-8">
           <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center">
