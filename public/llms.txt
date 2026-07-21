@@ -1,0 +1,8 @@
+# SmartOps
+
+> Business command center for African SMEs — POS, inventory, M-Pesa payments, staff, and AI insights in one platform.
+
+SmartOps is a multi-tenant SaaS built for small and medium businesses in Kenya and across Africa. It combines a fast offline-capable POS, inventory and batch/expiry tracking, supplier and purchase-order workflows, debtor and cash-flow reporting, staff and branch management, and an AI advisor — all localized for the Kenyan market (KES, counties, KRA PIN, M-Pesa STK Push).
+
+## Pages
+- [Home](/): Product overview and sign-up entry point.
