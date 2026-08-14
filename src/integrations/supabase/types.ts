@@ -283,6 +283,9 @@ export type Database = {
           sub_county: string | null
           updated_at: string
           village: string | null
+          whatsapp_opt_in: boolean
+          whatsapp_opt_in_at: string | null
+          whatsapp_opt_in_source: string | null
         }
         Insert: {
           business_name?: string | null
@@ -300,6 +303,9 @@ export type Database = {
           sub_county?: string | null
           updated_at?: string
           village?: string | null
+          whatsapp_opt_in?: boolean
+          whatsapp_opt_in_at?: string | null
+          whatsapp_opt_in_source?: string | null
         }
         Update: {
           business_name?: string | null
@@ -317,6 +323,9 @@ export type Database = {
           sub_county?: string | null
           updated_at?: string
           village?: string | null
+          whatsapp_opt_in?: boolean
+          whatsapp_opt_in_at?: string | null
+          whatsapp_opt_in_source?: string | null
         }
         Relationships: [
           {
@@ -2017,6 +2026,140 @@ export type Database = {
           },
         ]
       }
+      whatsapp_messages: {
+        Row: {
+          body: string | null
+          channel: string
+          created_at: string
+          customer_id: string | null
+          direction: string
+          error: string | null
+          gateway_message_id: string | null
+          id: string
+          matched: boolean
+          organization_id: string
+          phone: string
+          provider_message_id: string | null
+          sent_by: string | null
+          status: string
+          template_name: string | null
+          updated_at: string
+          variables: Json | null
+        }
+        Insert: {
+          body?: string | null
+          channel?: string
+          created_at?: string
+          customer_id?: string | null
+          direction: string
+          error?: string | null
+          gateway_message_id?: string | null
+          id?: string
+          matched?: boolean
+          organization_id: string
+          phone: string
+          provider_message_id?: string | null
+          sent_by?: string | null
+          status?: string
+          template_name?: string | null
+          updated_at?: string
+          variables?: Json | null
+        }
+        Update: {
+          body?: string | null
+          channel?: string
+          created_at?: string
+          customer_id?: string | null
+          direction?: string
+          error?: string | null
+          gateway_message_id?: string | null
+          id?: string
+          matched?: boolean
+          organization_id?: string
+          phone?: string
+          provider_message_id?: string | null
+          sent_by?: string | null
+          status?: string
+          template_name?: string | null
+          updated_at?: string
+          variables?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_messages_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_messages_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_settings: {
+        Row: {
+          api_key: string
+          base_url: string
+          business_name: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          last_error: string | null
+          organization_id: string
+          receiving_active: boolean
+          templates: Json
+          updated_at: string
+          webhook_secret: string | null
+          webhook_url: string | null
+          whatsapp_connected: boolean
+        }
+        Insert: {
+          api_key: string
+          base_url: string
+          business_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          last_error?: string | null
+          organization_id: string
+          receiving_active?: boolean
+          templates?: Json
+          updated_at?: string
+          webhook_secret?: string | null
+          webhook_url?: string | null
+          whatsapp_connected?: boolean
+        }
+        Update: {
+          api_key?: string
+          base_url?: string
+          business_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          last_error?: string | null
+          organization_id?: string
+          receiving_active?: boolean
+          templates?: Json
+          updated_at?: string
+          webhook_secret?: string | null
+          webhook_url?: string | null
+          whatsapp_connected?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       product_next_batch: {
@@ -2104,6 +2247,20 @@ export type Database = {
       user_permissions: {
         Args: { _org_id: string; _user_id: string }
         Returns: string[]
+      }
+      whatsapp_connection_status: {
+        Args: { _org_id: string }
+        Returns: {
+          base_url: string
+          business_name: string
+          configured: boolean
+          last_error: string
+          receiving_active: boolean
+          templates: Json
+          updated_at: string
+          webhook_url: string
+          whatsapp_connected: boolean
+        }[]
       }
     }
     Enums: {
