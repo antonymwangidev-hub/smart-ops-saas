@@ -53,37 +53,54 @@ export default function Dashboard() {
     return { todayStart, todayEnd, yesterdayStart, yesterdayEnd, sevenDaysAgo };
   }, []);
 
+  const { data: branchLabel } = useQuery({
+    queryKey: ["default_branch", currentOrg?.id],
+    queryFn: async () => {
+      if (!currentOrg) return null;
+      const { data } = await supabase
+        .from("branches")
+        .select("name, is_default")
+        .eq("organization_id", currentOrg.id)
+        .eq("is_active", true)
+        .order("is_default", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return (data as any)?.name ?? null;
+    },
+    enabled: !!currentOrg,
+  });
+
   const { data, isLoading } = useQuery({
-    queryKey: ["dashboard_v3", currentOrg?.id, ranges.todayStart],
+    queryKey: ["dashboard_v4", currentOrg?.id, ranges.todayStart],
     queryFn: async () => {
       if (!currentOrg) return null;
       const orgId = currentOrg.id;
 
       const [
         todaySalesRes, yesterdaySalesRes, last7DaysSalesRes,
-        lowStockRes, pendingCreditRes, todayCustomersRes, todaySaleItemsRes,
+        productsRes, pendingCreditRes, todayCustomersRes, recentSaleItemsRes,
       ] = await Promise.all([
-        (supabase as any).from("sales")
-          .select("total_amount, payment_method, is_credit, customer_id")
+        supabase.from("sales")
+          .select("total_amount, payment_method, is_credit, customer_name")
           .eq("organization_id", orgId).gte("created_at", ranges.todayStart).lte("created_at", ranges.todayEnd),
-        (supabase as any).from("sales")
-          .select("total_amount, customer_id")
+        supabase.from("sales")
+          .select("total_amount, customer_name")
           .eq("organization_id", orgId).gte("created_at", ranges.yesterdayStart).lt("created_at", ranges.yesterdayEnd),
-        (supabase as any).from("sales")
+        supabase.from("sales")
           .select("total_amount, created_at")
           .eq("organization_id", orgId).gte("created_at", ranges.sevenDaysAgo),
-        (supabase as any).from("products")
-          .select("id, name, stock_quantity, low_stock_threshold", { count: "exact" })
-          .eq("organization_id", orgId).eq("is_active", true).lte("stock_quantity", 10).limit(5),
-        (supabase as any).from("credit_sales")
-          .select("total_amount, amount_paid, customer_name, due_date, status")
-          .eq("organization_id", orgId).neq("status", "paid"),
-        (supabase as any).from("customers")
+        supabase.from("products")
+          .select("id, name, stock_quantity, low_stock_threshold, reorder_level, cost_price")
+          .eq("organization_id", orgId).eq("is_active", true).limit(2000),
+        supabase.from("credit_sales")
+          .select("total_amount, amount_paid, customer_name, due_date, is_settled")
+          .eq("organization_id", orgId).eq("is_settled", false),
+        supabase.from("customers")
           .select("id", { count: "exact", head: true })
           .eq("organization_id", orgId).gte("created_at", ranges.todayStart),
-        (supabase as any).from("sale_items")
-          .select("product_name, quantity, unit_price")
-          .eq("organization_id", orgId).gte("created_at", ranges.todayStart).lte("created_at", ranges.todayEnd),
+        supabase.from("sale_items")
+          .select("product_id, product_name, quantity, unit_price, discount_amount, created_at")
+          .eq("organization_id", orgId).gte("created_at", ranges.yesterdayStart),
       ]);
 
       const today: any[] = todaySalesRes.data || [];
@@ -97,12 +114,31 @@ export default function Dashboard() {
       const todayMpesa = sum(today.filter((x) => x.payment_method === "mpesa" && !x.is_credit));
       const todayCredit = sum(today.filter((x) => x.is_credit));
 
-      const todayCustomers = new Set(today.map((x) => x.customer_id).filter(Boolean)).size;
-      const yesterdayCustomers = new Set(yesterday.map((x) => x.customer_id).filter(Boolean)).size;
+      const servedCount = (rows: any[]) => {
+        const named = new Set(rows.map((r) => (r.customer_name || "").trim()).filter(Boolean));
+        const walkIns = rows.filter((r) => !(r.customer_name || "").trim()).length;
+        return named.size + walkIns;
+      };
+      const todayCustomers = servedCount(today);
+      const yesterdayCustomers = servedCount(yesterday);
 
-      // Rough profit estimate (30% margin assumption; replace when cost data is wired)
-      const todayProfit = Math.round(todayTotal * 0.3);
-      const yesterdayProfit = Math.round(yesterdayTotal * 0.3);
+      // ── Real gross profit from unit cost ────────────────────────────
+      const products: any[] = productsRes.data || [];
+      const costMap: Record<string, number> = {};
+      for (const p of products) costMap[p.id] = Number(p.cost_price || 0);
+
+      const items: any[] = recentSaleItemsRes.data || [];
+      const todayItems = items.filter((i) => i.created_at >= ranges.todayStart);
+      const yesterdayItems = items.filter((i) => i.created_at < ranges.todayStart);
+      const grossProfit = (rows: any[]) =>
+        Math.round(rows.reduce((s, i) => {
+          const revenue = Number(i.quantity) * Number(i.unit_price) - Number(i.discount_amount || 0);
+          const cost = Number(i.quantity) * (costMap[i.product_id] ?? 0);
+          return s + (revenue - cost);
+        }, 0));
+      const todayProfit = grossProfit(todayItems);
+      const yesterdayProfit = grossProfit(yesterdayItems);
+      const hasCostData = products.some((p) => Number(p.cost_price || 0) > 0);
 
       // 7-day sparkline & chart
       const byDay: Record<string, { name: string; total: number; ts: number }> = {};
@@ -118,18 +154,22 @@ export default function Dashboard() {
       const chart = Object.values(byDay).sort((a, b) => a.ts - b.ts);
       const sparkSales = chart.map((c) => c.total);
 
-      const lowStock: any[] = lowStockRes.data || [];
-      const lowStockCount = lowStockRes.count || 0;
+      // ── Low stock against each product's own threshold ─────────────
+      const lowStockAll = products
+        .filter((p) => Number(p.stock_quantity) <= Number(p.reorder_level ?? p.low_stock_threshold ?? 0))
+        .sort((a, b) => Number(a.stock_quantity) - Number(b.stock_quantity));
+      const lowStock = lowStockAll.slice(0, 5);
+      const lowStockCount = lowStockAll.length;
 
       const pendingCredit: any[] = pendingCreditRes.data || [];
       const totalOwed = pendingCredit.reduce((s, x) => s + (Number(x.total_amount) - Number(x.amount_paid)), 0);
       const overdue = pendingCredit.filter((c) => c.due_date && new Date(c.due_date) < new Date());
 
       const productMap: Record<string, { name: string; qty: number; revenue: number }> = {};
-      for (const item of (todaySaleItemsRes.data || []) as any[]) {
+      for (const item of todayItems) {
         if (!productMap[item.product_name]) productMap[item.product_name] = { name: item.product_name, qty: 0, revenue: 0 };
         productMap[item.product_name].qty += Number(item.quantity);
-        productMap[item.product_name].revenue += Number(item.quantity) * Number(item.unit_price);
+        productMap[item.product_name].revenue += Number(item.quantity) * Number(item.unit_price) - Number(item.discount_amount || 0);
       }
       const topProducts = Object.values(productMap).sort((a, b) => b.revenue - a.revenue).slice(0, 5);
 
@@ -143,7 +183,7 @@ export default function Dashboard() {
         todayTotal, yesterdayTotal, todayCash, todayMpesa, todayCredit,
         todayTxCount: today.length, todayCustomers, yesterdayCustomers,
         newCustomersToday: todayCustomersRes.count || 0,
-        todayProfit, yesterdayProfit,
+        todayProfit, yesterdayProfit, hasCostData,
         lowStockCount, lowStock,
         totalOwed, overdueCount: overdue.length,
         chart, sparkSales, topProducts, paymentSplit,
@@ -153,6 +193,7 @@ export default function Dashboard() {
     refetchInterval: 60_000,
     staleTime: 30_000,
   });
+
 
   // ── Derived AI insights & alerts (heuristic, from real data) ───────────
   const insights: AIInsight[] = useMemo(() => {
@@ -252,7 +293,7 @@ export default function Dashboard() {
               </h1>
               <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground flex-wrap">
                 <span className="inline-flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" />{dateLabel}</span>
-                <span className="inline-flex items-center gap-1.5"><Building2 className="h-3.5 w-3.5" />Main Branch</span>
+                <span className="inline-flex items-center gap-1.5"><Building2 className="h-3.5 w-3.5" />{branchLabel || "All branches"}</span>
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -285,7 +326,7 @@ export default function Dashboard() {
           <KpiCard
             label="Profit Today" value={data ? formatAmount(data.todayProfit) : "—"}
             icon={TrendingUp} tone="success" delta={profitDelta}
-            hint="Est. 30% margin"
+            hint={data?.hasCostData ? "Gross profit (sales − cost)" : "Add cost prices for accurate profit"}
           />
           <KpiCard
             label="Customers Served" value={data?.todayCustomers ?? 0}
