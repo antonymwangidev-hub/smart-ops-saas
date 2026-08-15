@@ -288,7 +288,7 @@ export default function Dashboard() {
               </h1>
               <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground flex-wrap">
                 <span className="inline-flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" />{dateLabel}</span>
-                <span className="inline-flex items-center gap-1.5"><Building2 className="h-3.5 w-3.5" />Main Branch</span>
+                <span className="inline-flex items-center gap-1.5"><Building2 className="h-3.5 w-3.5" />{branchLabel || "All branches"}</span>
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -321,7 +321,7 @@ export default function Dashboard() {
           <KpiCard
             label="Profit Today" value={data ? formatAmount(data.todayProfit) : "—"}
             icon={TrendingUp} tone="success" delta={profitDelta}
-            hint="Est. 30% margin"
+            hint={data?.hasCostData ? "Gross profit (sales − cost)" : "Add cost prices for accurate profit"}
           />
           <KpiCard
             label="Customers Served" value={data?.todayCustomers ?? 0}
