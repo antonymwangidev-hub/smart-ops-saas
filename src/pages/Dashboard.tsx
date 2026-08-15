@@ -114,8 +114,13 @@ export default function Dashboard() {
       const todayMpesa = sum(today.filter((x) => x.payment_method === "mpesa" && !x.is_credit));
       const todayCredit = sum(today.filter((x) => x.is_credit));
 
-      const todayCustomers = today.length;
-      const yesterdayCustomers = yesterday.length;
+      const servedCount = (rows: any[]) => {
+        const named = new Set(rows.map((r) => (r.customer_name || "").trim()).filter(Boolean));
+        const walkIns = rows.filter((r) => !(r.customer_name || "").trim()).length;
+        return named.size + walkIns;
+      };
+      const todayCustomers = servedCount(today);
+      const yesterdayCustomers = servedCount(yesterday);
 
       // ── Real gross profit from unit cost ────────────────────────────
       const products: any[] = productsRes.data || [];
