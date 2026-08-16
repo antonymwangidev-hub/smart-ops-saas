@@ -14,6 +14,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/components/ThemeProvider";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useQuery } from "@tanstack/react-query";
+import { WhatsAppSettingsCard } from "@/components/whatsapp/WhatsAppSettingsCard";
+
 
 export default function AppSettings() {
   const { currentOrg, refreshOrgs } = useOrg();
@@ -202,6 +204,10 @@ export default function AppSettings() {
             </Button>
           </CardContent>
         </Card>
+
+        <WhatsAppSettingsCard />
+
+
 
 
 

@@ -3,7 +3,7 @@ import {
   Settings, Bell, LogOut, ChevronDown, FileText, Shield, Package, Receipt,
   CreditCard, Calculator, UserCog, Undo2, Truck, ClipboardList, Wallet,
   AlertCircle, TrendingUp, Building2, ArrowLeftRight, Clock, ClipboardCheck,
-  Sparkles, DollarSign, Boxes, Briefcase, ChevronRight,
+  Sparkles, DollarSign, Boxes, Briefcase, ChevronRight, MessageSquare,
 } from "lucide-react";
 import { usePlatformAdmin } from "@/hooks/usePlatformAdmin";
 import { useOrgRole, ROLE_LEVEL, type OrgRole } from "@/hooks/useOrgRole";
@@ -36,8 +36,10 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "Customers", icon: Users, items: [
       { title: "Customers", url: "/customers", icon: Users, minRole: "staff" },
+      { title: "WhatsApp Inbox", url: "/whatsapp", icon: MessageSquare, minRole: "staff" },
     ],
   },
+
   {
     label: "Inventory", icon: Boxes, items: [
       { title: "Products", url: "/products", icon: Package, minRole: "storekeeper" },
