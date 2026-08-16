@@ -495,6 +495,30 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Shared rank map + guard: a caller may never act on a member whose rank
+    // is greater than or equal to their own (owners excepted for lower ranks).
+    const MEMBER_ROLE_RANK: Record<string, number> = {
+      admin: 100, manager: 80, accountant: 70, storekeeper: 65,
+      staff: 60, cashier: 50, attendant: 40,
+    };
+
+    const assertCanManageMember = async (orgId: string, memberId: string) => {
+      const [{ data: callerRow }, { data: targetRow }] = await Promise.all([
+        adminClient.from("organization_members").select("role, user_id")
+          .eq("organization_id", orgId).eq("user_id", user.id).maybeSingle(),
+        adminClient.from("organization_members").select("role, user_id")
+          .eq("organization_id", orgId).eq("id", memberId).maybeSingle(),
+      ]);
+      if (!targetRow) return { ok: false, status: 404, error: "Member not found" };
+      const callerRank = MEMBER_ROLE_RANK[callerRow?.role ?? ""] ?? 0;
+      const targetRank = MEMBER_ROLE_RANK[targetRow.role ?? ""] ?? 0;
+      // Acting on yourself is allowed; otherwise require strictly higher rank.
+      if (targetRow.user_id !== user.id && targetRank >= callerRank) {
+        return { ok: false, status: 403, error: "Forbidden: cannot modify a member at or above your own role" };
+      }
+      return { ok: true as const };
+    };
+
     if (action === "update_member_status") {
       const { org_id, member_id, status } = body;
       if (!["active", "suspended"].includes(status)) {
@@ -505,6 +529,12 @@ Deno.serve(async (req) => {
       if (!(await checkOrgManagerOrAdmin(org_id))) {
         return new Response(JSON.stringify({ error: "Forbidden" }), {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const guard = await assertCanManageMember(org_id, member_id);
+      if (!guard.ok) {
+        return new Response(JSON.stringify({ error: guard.error }), {
+          status: guard.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       const { error } = await adminClient.from("organization_members")
@@ -522,6 +552,12 @@ Deno.serve(async (req) => {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+      const guard = await assertCanManageMember(org_id, member_id);
+      if (!guard.ok) {
+        return new Response(JSON.stringify({ error: guard.error }), {
+          status: guard.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       const { error } = await adminClient.from("organization_members")
         .update({ branch_id: branch_id || null }).eq("id", member_id).eq("organization_id", org_id);
       if (error) throw error;
@@ -529,6 +565,7 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
 
     return new Response(JSON.stringify({ error: "Unknown action" }), {
       status: 400,
