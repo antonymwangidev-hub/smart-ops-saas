@@ -15,11 +15,15 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Pencil, Trash2, Loader2, ChevronLeft, ChevronRight, Download } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Loader2, ChevronLeft, ChevronRight, Download, MessageSquare } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { FileImport } from "@/components/FileImport";
 import { useToast } from "@/hooks/use-toast";
 import { exportToCSV } from "@/lib/csvExport";
 import { KENYA_COUNTIES, FARMER_TYPES, isValidKraPin } from "@/lib/kenya";
+import { getPhoneValidationError, toInternationalFormat } from "@/lib/phone";
+import { WhatsAppSendDialog } from "@/components/whatsapp/WhatsAppSendDialog";
 
 const PAGE_SIZE = 50;
 
@@ -36,6 +40,8 @@ interface Customer {
   farmer_type: string | null;
   credit_limit: number | null;
   kra_pin: string | null;
+  whatsapp_opt_in: boolean | null;
+  whatsapp_opt_in_source: string | null;
   created_at: string;
 }
 
@@ -51,7 +57,10 @@ const emptyForm = {
   farmer_type: "",
   credit_limit: "",
   kra_pin: "",
+  whatsapp_opt_in: false,
+  whatsapp_opt_in_source: "",
 };
+
 
 export default function Customers() {
   const { currentOrg } = useOrg();
