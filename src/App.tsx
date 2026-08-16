@@ -72,6 +72,8 @@ const Automations    = lazy(() => import("./pages/Automations"));
 const Documents      = lazy(() => import("./pages/Documents"));
 const Notifications  = lazy(() => import("./pages/Notifications"));
 const AppSettings    = lazy(() => import("./pages/AppSettings"));
+const WhatsAppInbox  = lazy(() => import("./pages/WhatsAppInbox"));
+
 
 // ── People ──────────────────────────────────────────────────────────────
 const StaffManagement = lazy(() => import("./pages/StaffManagement"));
@@ -142,6 +144,9 @@ const App = () => (
                         element={<PrivateRoute><RoleRoute requiredRole="staff"><Dashboard /></RoleRoute></PrivateRoute>} />
                       <Route path="/customers"
                         element={<PrivateRoute><RoleRoute requiredRole="staff"><Customers /></RoleRoute></PrivateRoute>} />
+                      <Route path="/whatsapp"
+                        element={<PrivateRoute><RoleRoute requiredRole="staff"><WhatsAppInbox /></RoleRoute></PrivateRoute>} />
+
                       <Route path="/orders"
                         element={<PrivateRoute><RoleRoute requiredRole="staff"><Orders /></RoleRoute></PrivateRoute>} />
                       <Route path="/tasks"
