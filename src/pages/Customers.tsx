@@ -420,7 +420,35 @@ export default function Customers() {
                         {c.credit_limit != null ? formatAmount(Number(c.credit_limit)) : <span className="text-muted-foreground">—</span>}
                       </TableCell>
                       <TableCell className="text-right">
+                        {(() => {
+                          const canMessage = !!c.whatsapp_opt_in && !!c.phone && !!toInternationalFormat(c.phone);
+                          return (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="inline-flex">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    disabled={!canMessage}
+                                    onClick={() => setWaTarget(c)}
+                                    aria-label={`Send WhatsApp to ${c.name}`}
+                                  >
+                                    <MessageSquare className={`h-4 w-4 ${canMessage ? "text-success" : ""}`} />
+                                  </Button>
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {canMessage
+                                  ? "Send a WhatsApp message"
+                                  : !c.whatsapp_opt_in
+                                    ? "Customer has not opted in to WhatsApp"
+                                    : "Add a valid phone number first"}
+                              </TooltipContent>
+                            </Tooltip>
+                          );
+                        })()}
                         <Button variant="ghost" size="icon" onClick={() => openEdit(c)}><Pencil className="h-4 w-4" /></Button>
+
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button>
