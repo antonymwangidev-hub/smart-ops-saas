@@ -73,6 +73,8 @@ export default function Customers() {
   const [editing, setEditing] = useState<Customer | null>(null);
   const [form, setForm] = useState({ ...emptyForm });
   const [page, setPage] = useState(0);
+  const [waTarget, setWaTarget] = useState<Customer | null>(null);
+
 
   const { data, isLoading } = useQuery({
     queryKey: ["customers", currentOrg?.id, page],
@@ -101,6 +103,15 @@ export default function Customers() {
       if (form.kra_pin && !isValidKraPin(form.kra_pin)) {
         throw new Error("KRA PIN must look like A123456789Z");
       }
+      const phoneError = getPhoneValidationError(form.phone);
+      if (phoneError) throw new Error(phoneError);
+      if (form.whatsapp_opt_in && !form.whatsapp_opt_in_source.trim()) {
+        throw new Error("Record how WhatsApp consent was obtained.");
+      }
+      if (form.whatsapp_opt_in && !toInternationalFormat(form.phone || "")) {
+        throw new Error("A valid phone number is required for WhatsApp opt-in.");
+      }
+      const wasOptedIn = !!editing?.whatsapp_opt_in;
       const payload: any = {
         name: form.name,
         business_name: form.business_name || null,
@@ -113,6 +124,10 @@ export default function Customers() {
         farmer_type: form.farmer_type || null,
         credit_limit: form.credit_limit ? Number(form.credit_limit) : null,
         kra_pin: form.kra_pin ? form.kra_pin.toUpperCase() : null,
+        whatsapp_opt_in: form.whatsapp_opt_in,
+        whatsapp_opt_in_source: form.whatsapp_opt_in ? form.whatsapp_opt_in_source.trim() : null,
+        ...(form.whatsapp_opt_in && !wasOptedIn ? { whatsapp_opt_in_at: new Date().toISOString() } : {}),
+        ...(!form.whatsapp_opt_in ? { whatsapp_opt_in_at: null } : {}),
       };
       if (editing) {
         const { error } = await supabase.from("customers").update(payload).eq("id", editing.id);
@@ -131,6 +146,28 @@ export default function Customers() {
           metadata: { name: form.name },
         });
       }
+
+      // Mirror consent to the WhatsApp gateway (best effort — never blocks the save)
+      const e164 = form.phone ? toInternationalFormat(form.phone) : null;
+      if (e164) {
+        const { data: syncData } = await supabase.functions.invoke("whatsapp-gateway", {
+          body: {
+            action: "sync_contact",
+            organization_id: currentOrg.id,
+            phone: `+${e164}`,
+            display_name: form.name,
+            opt_in: form.whatsapp_opt_in,
+            opt_in_source: form.whatsapp_opt_in ? form.whatsapp_opt_in_source.trim() : "",
+          },
+        });
+        const syncErr = (syncData as any)?.error;
+        if (syncErr) return { warning: `Saved, but WhatsApp contact sync failed: ${syncErr}` };
+      }
+      return {};
+    },
+    onSuccess: (res: any) => {
+      if (res?.warning) toast({ title: "Customer saved", description: res.warning });
+
     },
     onSuccess: () => {
       setDialogOpen(false);
