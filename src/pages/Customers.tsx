@@ -164,6 +164,8 @@ export default function Customers() {
       farmer_type: c.farmer_type || "",
       credit_limit: c.credit_limit != null ? String(c.credit_limit) : "",
       kra_pin: c.kra_pin || "",
+      whatsapp_opt_in: !!c.whatsapp_opt_in,
+      whatsapp_opt_in_source: c.whatsapp_opt_in_source || "",
     });
     setDialogOpen(true);
   };
