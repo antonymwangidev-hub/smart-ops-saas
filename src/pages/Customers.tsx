@@ -73,6 +73,8 @@ export default function Customers() {
   const [editing, setEditing] = useState<Customer | null>(null);
   const [form, setForm] = useState({ ...emptyForm });
   const [page, setPage] = useState(0);
+  const [waTarget, setWaTarget] = useState<Customer | null>(null);
+
 
   const { data, isLoading } = useQuery({
     queryKey: ["customers", currentOrg?.id, page],
@@ -101,6 +103,15 @@ export default function Customers() {
       if (form.kra_pin && !isValidKraPin(form.kra_pin)) {
         throw new Error("KRA PIN must look like A123456789Z");
       }
+      const phoneError = getPhoneValidationError(form.phone);
+      if (phoneError) throw new Error(phoneError);
+      if (form.whatsapp_opt_in && !form.whatsapp_opt_in_source.trim()) {
+        throw new Error("Record how WhatsApp consent was obtained.");
+      }
+      if (form.whatsapp_opt_in && !toInternationalFormat(form.phone || "")) {
+        throw new Error("A valid phone number is required for WhatsApp opt-in.");
+      }
+      const wasOptedIn = !!editing?.whatsapp_opt_in;
       const payload: any = {
         name: form.name,
         business_name: form.business_name || null,
@@ -113,6 +124,10 @@ export default function Customers() {
         farmer_type: form.farmer_type || null,
         credit_limit: form.credit_limit ? Number(form.credit_limit) : null,
         kra_pin: form.kra_pin ? form.kra_pin.toUpperCase() : null,
+        whatsapp_opt_in: form.whatsapp_opt_in,
+        whatsapp_opt_in_source: form.whatsapp_opt_in ? form.whatsapp_opt_in_source.trim() : null,
+        ...(form.whatsapp_opt_in && !wasOptedIn ? { whatsapp_opt_in_at: new Date().toISOString() } : {}),
+        ...(!form.whatsapp_opt_in ? { whatsapp_opt_in_at: null } : {}),
       };
       if (editing) {
         const { error } = await supabase.from("customers").update(payload).eq("id", editing.id);
@@ -131,8 +146,28 @@ export default function Customers() {
           metadata: { name: form.name },
         });
       }
+
+      // Mirror consent to the WhatsApp gateway (best effort — never blocks the save)
+      const e164 = form.phone ? toInternationalFormat(form.phone) : null;
+      if (e164) {
+        const { data: syncData } = await supabase.functions.invoke("whatsapp-gateway", {
+          body: {
+            action: "sync_contact",
+            organization_id: currentOrg.id,
+            phone: `+${e164}`,
+            display_name: form.name,
+            opt_in: form.whatsapp_opt_in,
+            opt_in_source: form.whatsapp_opt_in ? form.whatsapp_opt_in_source.trim() : "",
+          },
+        });
+        const syncErr = (syncData as any)?.error;
+        if (syncErr) return { warning: `Saved, but WhatsApp contact sync failed: ${syncErr}` };
+      }
+      return {};
     },
-    onSuccess: () => {
+    onSuccess: (res: any) => {
+      if (res?.warning) toast({ title: "Customer saved", description: res.warning });
+
       setDialogOpen(false);
       setEditing(null);
       setForm({ ...emptyForm });
@@ -291,6 +326,33 @@ export default function Customers() {
                     <Label>Notes</Label>
                     <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} />
                   </div>
+                  <div className="space-y-2 rounded-xl border border-border p-3">
+                    <div className="flex items-start gap-2">
+                      <Checkbox
+                        id="wa-opt-in"
+                        checked={form.whatsapp_opt_in}
+                        onCheckedChange={(v) => setForm({ ...form, whatsapp_opt_in: v === true })}
+                      />
+                      <div className="space-y-0.5">
+                        <Label htmlFor="wa-opt-in" className="cursor-pointer">Customer consented to WhatsApp messages</Label>
+                        <p className="text-xs text-muted-foreground">
+                          Only opted-in contacts can be messaged. {getPhoneValidationError(form.phone) || ""}
+                        </p>
+                      </div>
+                    </div>
+                    {form.whatsapp_opt_in && (
+                      <div className="space-y-1.5">
+                        <Label>How was consent obtained? *</Label>
+                        <Input
+                          value={form.whatsapp_opt_in_source}
+                          onChange={(e) => setForm({ ...form, whatsapp_opt_in_source: e.target.value })}
+                          placeholder="e.g. Signed in-store form, 17 Aug 2026"
+                          maxLength={200}
+                        />
+                      </div>
+                    )}
+                  </div>
+
                   <Button type="submit" className="w-full" disabled={saveMutation.isPending}>
                     {saveMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                     {editing ? "Update" : "Create"}
@@ -358,7 +420,35 @@ export default function Customers() {
                         {c.credit_limit != null ? formatAmount(Number(c.credit_limit)) : <span className="text-muted-foreground">—</span>}
                       </TableCell>
                       <TableCell className="text-right">
+                        {(() => {
+                          const canMessage = !!c.whatsapp_opt_in && !!c.phone && !!toInternationalFormat(c.phone);
+                          return (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="inline-flex">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    disabled={!canMessage}
+                                    onClick={() => setWaTarget(c)}
+                                    aria-label={`Send WhatsApp to ${c.name}`}
+                                  >
+                                    <MessageSquare className={`h-4 w-4 ${canMessage ? "text-success" : ""}`} />
+                                  </Button>
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {canMessage
+                                  ? "Send a WhatsApp message"
+                                  : !c.whatsapp_opt_in
+                                    ? "Customer has not opted in to WhatsApp"
+                                    : "Add a valid phone number first"}
+                              </TooltipContent>
+                            </Tooltip>
+                          );
+                        })()}
                         <Button variant="ghost" size="icon" onClick={() => openEdit(c)}><Pencil className="h-4 w-4" /></Button>
+
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button>
@@ -398,7 +488,16 @@ export default function Customers() {
             </Button>
           </div>
         )}
+
+        <WhatsAppSendDialog
+          open={!!waTarget}
+          onOpenChange={(o) => !o && setWaTarget(null)}
+          customerId={waTarget?.id ?? null}
+          customerName={waTarget?.name ?? ""}
+          phone={waTarget?.phone ?? null}
+        />
       </div>
+
     </AppLayout>
   );
 }
