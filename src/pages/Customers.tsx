@@ -326,6 +326,33 @@ export default function Customers() {
                     <Label>Notes</Label>
                     <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} />
                   </div>
+                  <div className="space-y-2 rounded-xl border border-border p-3">
+                    <div className="flex items-start gap-2">
+                      <Checkbox
+                        id="wa-opt-in"
+                        checked={form.whatsapp_opt_in}
+                        onCheckedChange={(v) => setForm({ ...form, whatsapp_opt_in: v === true })}
+                      />
+                      <div className="space-y-0.5">
+                        <Label htmlFor="wa-opt-in" className="cursor-pointer">Customer consented to WhatsApp messages</Label>
+                        <p className="text-xs text-muted-foreground">
+                          Only opted-in contacts can be messaged. {getPhoneValidationError(form.phone) || ""}
+                        </p>
+                      </div>
+                    </div>
+                    {form.whatsapp_opt_in && (
+                      <div className="space-y-1.5">
+                        <Label>How was consent obtained? *</Label>
+                        <Input
+                          value={form.whatsapp_opt_in_source}
+                          onChange={(e) => setForm({ ...form, whatsapp_opt_in_source: e.target.value })}
+                          placeholder="e.g. Signed in-store form, 17 Aug 2026"
+                          maxLength={200}
+                        />
+                      </div>
+                    )}
+                  </div>
+
                   <Button type="submit" className="w-full" disabled={saveMutation.isPending}>
                     {saveMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                     {editing ? "Update" : "Create"}
