@@ -488,7 +488,16 @@ export default function Customers() {
             </Button>
           </div>
         )}
+
+        <WhatsAppSendDialog
+          open={!!waTarget}
+          onOpenChange={(o) => !o && setWaTarget(null)}
+          customerId={waTarget?.id ?? null}
+          customerName={waTarget?.name ?? ""}
+          phone={waTarget?.phone ?? null}
+        />
       </div>
+
     </AppLayout>
   );
 }
