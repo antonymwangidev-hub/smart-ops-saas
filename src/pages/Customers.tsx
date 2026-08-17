@@ -168,8 +168,6 @@ export default function Customers() {
     onSuccess: (res: any) => {
       if (res?.warning) toast({ title: "Customer saved", description: res.warning });
 
-    },
-    onSuccess: () => {
       setDialogOpen(false);
       setEditing(null);
       setForm({ ...emptyForm });
