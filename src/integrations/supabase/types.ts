@@ -2114,6 +2114,7 @@ export type Database = {
           receiving_active: boolean
           templates: Json
           updated_at: string
+          webhook_endpoint_id: string | null
           webhook_secret: string | null
           webhook_url: string | null
           whatsapp_connected: boolean
@@ -2130,6 +2131,7 @@ export type Database = {
           receiving_active?: boolean
           templates?: Json
           updated_at?: string
+          webhook_endpoint_id?: string | null
           webhook_secret?: string | null
           webhook_url?: string | null
           whatsapp_connected?: boolean
@@ -2146,6 +2148,7 @@ export type Database = {
           receiving_active?: boolean
           templates?: Json
           updated_at?: string
+          webhook_endpoint_id?: string | null
           webhook_secret?: string | null
           webhook_url?: string | null
           whatsapp_connected?: boolean
