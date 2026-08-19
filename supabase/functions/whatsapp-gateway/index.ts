@@ -123,19 +123,37 @@ Deno.serve(async (req) => {
       const businessName = settingsRes.data?.businessName || settingsRes.data?.name || null;
       const waConnected = !!settingsRes.data?.whatsapp?.connected;
 
-      // Webhook registration (unsigned test ping is accepted by our webhook fn)
+      // Webhook registration.
+      // Gateway API: GET /api/v1/webhooks lists endpoints,
+      // POST /api/v1/webhooks/register creates one (returns { id, secret }),
+      // DELETE /api/v1/webhooks/{id} removes one.
       let receiving = false;
       let webhookError: string | null = null;
       let webhookSecret: string | null = null;
-      const reg = await gw(s, "/api/v1/webhooks/register", { method: "POST", body: { url: webhookUrl } });
+      let endpointId: string | null = null;
+
+      // Remove any stale registration of *our* webhook first so the secret we
+      // store always matches the live endpoint.
+      const list = await gw(s, "/api/v1/webhooks");
+      const endpoints: any[] = Array.isArray(list.data?.endpoints)
+        ? list.data.endpoints
+        : (Array.isArray(list.data) ? list.data : []);
+      for (const ep of endpoints) {
+        if (typeof ep?.url === "string" && ep.url.startsWith(webhookUrl.split("?")[0]) && ep.id) {
+          await gw(s, `/api/v1/webhooks/${ep.id}`, { method: "DELETE" });
+        }
+      }
+
+      const reg = await gw(s, "/api/v1/webhooks/register", { method: "POST", body: { url: webhookUrl, label: "SmartOps" } });
       if (reg.ok) {
-        receiving = true;
-        webhookSecret = reg.data?.webhookSecret || null;
+        webhookSecret = reg.data?.secret || reg.data?.webhookSecret || null;
+        endpointId = reg.data?.id || null;
+        receiving = !!webhookSecret;
+        if (!webhookSecret) {
+          webhookError = "Receiving was registered but the gateway did not return a signing secret. Sending still works.";
+        }
       } else {
-        const e = (reg.error || "").toLowerCase();
-        webhookError = /already|exists|registered|conflict/.test(e) || reg.status === 409
-          ? "This gateway account already has a different webhook registered. Only one receiving app is supported per account — remove the other registration first. Sending still works."
-          : `Could not enable receiving: ${reg.error}. Sending still works.`;
+        webhookError = `Could not enable receiving: ${reg.error}. Sending still works.`;
       }
 
       // Templates
@@ -148,9 +166,10 @@ Deno.serve(async (req) => {
         base_url: baseUrl,
         api_key: apiKey,
         webhook_url: receiving ? webhookUrl : existing?.webhook_url ?? null,
+        webhook_endpoint_id: endpointId ?? existing?.webhook_endpoint_id ?? null,
         business_name: businessName,
         whatsapp_connected: waConnected,
-        receiving_active: receiving || !!existing?.receiving_active,
+        receiving_active: receiving,
         templates,
         last_error: webhookError,
         created_by: user.id,
@@ -184,19 +203,45 @@ Deno.serve(async (req) => {
       if (!s) return json({ error: "WhatsApp is not configured yet." }, 400);
       const tpl = await gw(s, "/api/v1/templates");
       const templates = Array.isArray(tpl.data) ? tpl.data : (tpl.data?.templates ?? []);
-      const hook = await gw(s, "/api/v1/webhooks/register");
-      const registeredUrl = hook.data?.url || null;
-      const receiving = !!registeredUrl && registeredUrl.startsWith(webhookUrl.split("?")[0]);
+
+      const list = await gw(s, "/api/v1/webhooks");
+      const endpoints: any[] = Array.isArray(list.data?.endpoints)
+        ? list.data.endpoints
+        : (Array.isArray(list.data) ? list.data : []);
+      const prefix = webhookUrl.split("?")[0];
+      const mine = endpoints.find((ep: any) => typeof ep?.url === "string" && ep.url.startsWith(prefix));
+      const registeredUrl = mine?.url ?? null;
+
+      // Re-register automatically if our endpoint is gone or we lost the secret.
+      let receiving = !!mine && mine.isActive !== false && !!s.webhook_secret;
+      const update: Record<string, any> = {};
+      if (!receiving) {
+        if (mine?.id && !s.webhook_secret) {
+          await gw(s, `/api/v1/webhooks/${mine.id}`, { method: "DELETE" });
+        }
+        const reg = await gw(s, "/api/v1/webhooks/register", { method: "POST", body: { url: webhookUrl, label: "SmartOps" } });
+        const secret = reg.ok ? (reg.data?.secret || reg.data?.webhookSecret || null) : null;
+        if (secret) {
+          update.webhook_secret = secret;
+          update.webhook_endpoint_id = reg.data?.id ?? null;
+          update.webhook_url = webhookUrl;
+          receiving = true;
+        }
+      }
+
       const settingsRes = await gw(s, "/api/v1/settings");
       await admin.from("whatsapp_settings").update({
+        ...update,
         templates,
         receiving_active: receiving,
         whatsapp_connected: !!settingsRes.data?.whatsapp?.connected,
-        business_name: settingsRes.data?.businessName ?? s.business_name,
-        last_error: receiving ? null : "Receiving is not active — another app may have replaced this webhook registration.",
+        business_name: settingsRes.data?.businessName ?? settingsRes.data?.name ?? s.business_name,
+        last_error: receiving ? null : "Receiving is not active — the gateway rejected the webhook registration.",
       }).eq("organization_id", orgId);
-      return json({ success: true, data: { templates, receiving_active: receiving, registered_url: registeredUrl } });
+      return json({ success: true, data: { templates, receiving_active: receiving, registered_url: receiving ? webhookUrl : registeredUrl } });
     }
+
+
 
     // ── Disconnect ──────────────────────────────────────────────────────
     if (action === "disconnect") {
