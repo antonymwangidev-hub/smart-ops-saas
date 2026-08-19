@@ -19,8 +19,10 @@ export function RoleRoute({ children, requiredRole, requiredPermission }: RoleRo
 
   // Wait for the org (and therefore the role) to resolve before deciding.
   // Without this, deep links redirect to /pos on first paint.
-  if (orgLoading || (!currentOrg && !orgLoading && loading)) return null;
-  if (!currentOrg) return null;
+  // PrivateRoute handles the "no org at all" case.
+  if (orgLoading || !currentOrg) return null;
+
+
 
 
   if (requiredPermission) {
