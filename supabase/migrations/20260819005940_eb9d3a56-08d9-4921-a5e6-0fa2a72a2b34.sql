@@ -1,0 +1,1 @@
+DELETE FROM public.whatsapp_messages WHERE body = 'Hello SmartOps test' AND direction = 'inbound';
