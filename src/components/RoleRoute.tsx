@@ -1,6 +1,7 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useOrgRole, ROLE_LEVEL, type OrgRole } from "@/hooks/useOrgRole";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useOrg } from "@/contexts/OrgContext";
 
 interface RoleRouteProps {
   children: React.ReactNode;
@@ -13,7 +14,14 @@ interface RoleRouteProps {
 export function RoleRoute({ children, requiredRole, requiredPermission }: RoleRouteProps) {
   const { role, canAccess } = useOrgRole();
   const { has, loading } = usePermissions();
+  const { currentOrg, loading: orgLoading } = useOrg();
   const location = useLocation();
+
+  // Wait for the org (and therefore the role) to resolve before deciding.
+  // Without this, deep links redirect to /pos on first paint.
+  if (orgLoading || (!currentOrg && !orgLoading && loading)) return null;
+  if (!currentOrg) return null;
+
 
   if (requiredPermission) {
     if (loading) return null;
