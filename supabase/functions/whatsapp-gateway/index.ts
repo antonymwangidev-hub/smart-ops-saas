@@ -248,9 +248,20 @@ Deno.serve(async (req) => {
       if (!(await isOrgAdmin())) return json({ error: "Only business owners can do this." }, 403);
       const s = await loadSettings();
       if (s) {
-        await gw(s, "/api/v1/webhooks/register", { method: "DELETE" });
+        const list = await gw(s, "/api/v1/webhooks");
+        const endpoints: any[] = Array.isArray(list.data?.endpoints)
+          ? list.data.endpoints
+          : (Array.isArray(list.data) ? list.data : []);
+        const prefix = webhookUrl.split("?")[0];
+        const ids = new Set<string>();
+        if (s.webhook_endpoint_id) ids.add(String(s.webhook_endpoint_id));
+        for (const ep of endpoints) {
+          if (typeof ep?.url === "string" && ep.url.startsWith(prefix) && ep.id) ids.add(String(ep.id));
+        }
+        for (const id of ids) await gw(s, `/api/v1/webhooks/${id}`, { method: "DELETE" });
         await admin.from("whatsapp_settings").delete().eq("organization_id", orgId);
       }
+
       return json({ success: true });
     }
 
