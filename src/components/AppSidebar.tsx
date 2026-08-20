@@ -37,6 +37,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Customers", icon: Users, items: [
       { title: "Customers", url: "/customers", icon: Users, minRole: "staff" },
       { title: "WhatsApp Inbox", url: "/whatsapp", icon: MessageSquare, minRole: "staff" },
+      { title: "WhatsApp Templates", url: "/whatsapp-templates", icon: MessageSquare, minRole: "staff" },
     ],
   },
 
