@@ -147,6 +147,9 @@ const App = () => (
                         element={<PrivateRoute><RoleRoute requiredRole="staff"><Customers /></RoleRoute></PrivateRoute>} />
                       <Route path="/whatsapp"
                         element={<PrivateRoute><RoleRoute requiredRole="staff"><WhatsAppInbox /></RoleRoute></PrivateRoute>} />
+                      <Route path="/whatsapp-templates"
+                        element={<PrivateRoute><RoleRoute requiredRole="staff"><WhatsAppTemplates /></RoleRoute></PrivateRoute>} />
+
 
                       <Route path="/orders"
                         element={<PrivateRoute><RoleRoute requiredRole="staff"><Orders /></RoleRoute></PrivateRoute>} />
