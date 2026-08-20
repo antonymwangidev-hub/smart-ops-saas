@@ -162,11 +162,14 @@ export default function Customers() {
         });
         const syncErr = (syncData as any)?.error;
         if (syncErr) return { warning: `Saved, but WhatsApp contact sync failed: ${syncErr}` };
+        if (form.whatsapp_opt_in) return { synced: true };
       }
       return {};
     },
     onSuccess: (res: any) => {
       if (res?.warning) toast({ title: "Customer saved", description: res.warning });
+      else if (res?.synced) toast({ title: "Customer saved", description: "Added to WhatsApp approved contacts." });
+
 
       setDialogOpen(false);
       setEditing(null);
